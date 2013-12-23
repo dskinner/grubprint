@@ -28,7 +28,7 @@ create table LanguaLFactor (
 	LanguaLFactorDescriptionId text
 );
 
-drop table if exist LanguaLFactorDescription;
+drop table if exists LanguaLFactorDescription;
 create table LanguaLFactorDescription (
 	Id          text primary key,
 	Description text
@@ -63,7 +63,7 @@ create table NutrientDataDefinition (
 	TagName        text,
 	NutrDesc       text,
 	NumDec         text,
-	Order          real
+	Sort           real
 );
 
 drop table if exists SourceCode;

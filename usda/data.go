@@ -60,7 +60,6 @@ package usda
 import (
 	"bufio"
 	"database/sql"
-	"fmt"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
@@ -72,8 +71,10 @@ import (
 
 type FileType int
 
+type FileModelMaker func([]string) interface{}
+
 const (
-	FileFoodDescription FileType = iota
+	FileFood FileType = iota
 	FileNutrientData
 	FileWeight
 	FileFootnote
@@ -88,7 +89,7 @@ const (
 )
 
 var FileTable = map[FileType]string{
-	FileFoodDescription:           "FOOD_DES",
+	FileFood:                      "FOOD_DES",
 	FileNutrientData:              "NUT_DATA",
 	FileWeight:                    "WEIGHT",
 	FileFootnote:                  "FOOTNOTE",
@@ -123,66 +124,15 @@ func formatFloat(s string) float64 {
 	return f
 }
 
-type FoodDescription struct {
-	Id               string
-	FoodGroupId      string
-	LongDesc         string
-	ShortDesc        string
-	CommonNames      string
-	ManufacturerName string
-
-	// Indicates if the food item is used in the USDA Food and Nutrient
-	// Database for Dietary Studies (FNDDS) and thus has a complete nutrient
-	// profile for the 65 FNDDS nutrients.
-	Survey string
-
-	// Description of inedible parts of the foot item
-	RefuseDesc string
-	// Percentage of refuse
-	Refuse float64
-
-	ScientificName string
-
-	// Factor for converting nitrogen to protein
-	NitrogenFactor float64
-
-	// Factors for calculating calories
-	ProteinFactor      float64
-	FatFactor          float64
-	CarbohydrateFactor float64
-}
-
-func (fd *FoodDescription) fromColumns(cols []string) {
-	fd.Id = formatString(cols[0])
-	fd.FoodGroupId = formatString(cols[1])
-	fd.LongDesc = formatString(cols[2])
-	fd.ShortDesc = formatString(cols[3])
-	fd.CommonNames = formatString(cols[4])
-	fd.ManufacturerName = formatString(cols[5])
-	fd.Survey = formatString(cols[6])
-	fd.RefuseDesc = formatString(cols[7])
-	fd.Refuse = formatFloat(cols[8])
-	fd.ScientificName = formatString(cols[9])
-	fd.NitrogenFactor = formatFloat(cols[10])
-	fd.ProteinFactor = formatFloat(cols[11])
-	fd.FatFactor = formatFloat(cols[12])
-	fd.CarbohydrateFactor = formatFloat(cols[13])
-}
-
-func (fd *FoodDescription) save(stmt *sql.Stmt) {
-	_, err := stmt.Exec(fd.Id, fd.FoodGroupId, fd.LongDesc, fd.ShortDesc, fd.CommonNames, fd.ManufacturerName, fd.Survey, fd.RefuseDesc, fd.Refuse,
-		fd.ScientificName, fd.NitrogenFactor, fd.ProteinFactor, fd.FatFactor, fd.CarbohydrateFactor)
-	if err != nil {
-		log.Fatalf("Failed to execute prepared statement: %v\n", err)
-	}
-}
-
-func dbInit() *sql.DB {
+func dbOpen() *sql.DB {
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5555/food?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to open db conn: %v\n", err)
 	}
+	return db
+}
 
+func dbInit(db *sql.DB) {
 	f, err := os.Open("schema.sql")
 	if err != nil {
 		log.Fatalf("Failed to open schema file: %v\n", err)
@@ -196,11 +146,9 @@ func dbInit() *sql.DB {
 	if err != nil {
 		log.Fatalf("Failed to init schema: %v\n", err)
 	}
-
-	return db
 }
 
-func LoadFile(f FileType) {
+func LoadFile(f FileType) [][]string {
 	name := FileTable[f] + ".txt"
 	file, err := os.Open(path.Join("data", name))
 	if err != nil {
@@ -208,45 +156,69 @@ func LoadFile(f FileType) {
 	}
 	defer file.Close()
 
-	db := dbInit()
+	var models [][]string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		cols := strings.Split(scanner.Text(), "^")
+		models = append(models, cols)
+	}
+
+	if err = scanner.Err(); err != nil {
+		log.Fatalf("Scanner error on file %s: %v\n", name, err)
+	}
+
+	return models
+}
+
+func LoadFood(tx *sql.Tx) {
+	var foods []*Food
+	for _, cols := range LoadFile(FileFood) {
+		fd := &Food{}
+		fd.Id = formatString(cols[0])
+		fd.FoodGroupId = formatString(cols[1])
+		fd.LongDesc = formatString(cols[2])
+		fd.ShortDesc = formatString(cols[3])
+		fd.CommonNames = formatString(cols[4])
+		fd.ManufacturerName = formatString(cols[5])
+		fd.Survey = formatString(cols[6])
+		fd.RefuseDesc = formatString(cols[7])
+		fd.Refuse = formatFloat(cols[8])
+		fd.ScientificName = formatString(cols[9])
+		fd.NitrogenFactor = formatFloat(cols[10])
+		fd.ProteinFactor = formatFloat(cols[11])
+		fd.FatFactor = formatFloat(cols[12])
+		fd.CarbohydrateFactor = formatFloat(cols[13])
+		foods = append(foods, fd)
+	}
+	FoodInsert(tx, foods...)
+}
+
+func LoadFoodGroup(tx *sql.Tx) {
+	var foodGroups []*FoodGroup
+	for _, cols := range LoadFile(FileFoodGroupDescription) {
+		fg := &FoodGroup{}
+		fg.Id = formatString(cols[0])
+		fg.Description = formatString(cols[1])
+		foodGroups = append(foodGroups, fg)
+	}
+	FoodGroupInsert(tx, foodGroups...)
+}
+
+func LoadAll() {
+	db := dbOpen()
 	defer db.Close()
+
+	dbInit(db)
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Fatalf("Failed to open transaction: %v\n", err)
 	}
 
-	stmt, err := tx.Prepare("insert into FoodDescription values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);")
-	if err != nil {
-		log.Fatalf("Failed to prepare insert statement: %v\n", err)
-	}
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		cols := strings.Split(scanner.Text(), "^")
-		fd := &FoodDescription{}
-		fd.fromColumns(cols)
-		fd.save(stmt)
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatalf("Scanner error on file %s: %v\n", name, err)
-	}
+	LoadFood(tx)
+	LoadFoodGroup(tx)
 
 	if err = tx.Commit(); err != nil {
 		log.Fatalf("transaction commit failed: %v\n", err)
-	}
-
-	rows, err := db.Query("select * from fooddescription where longdesc like '%butter%';")
-	if err != nil {
-		log.Fatalf("select query failed: %v\n", err)
-	}
-	for rows.Next() {
-		fd := &FoodDescription{}
-		err = rows.Scan(&fd.Id, &fd.FoodGroupId, &fd.LongDesc, &fd.ShortDesc, &fd.CommonNames, &fd.ManufacturerName, &fd.Survey, &fd.RefuseDesc, &fd.Refuse,
-			&fd.ScientificName, &fd.NitrogenFactor, &fd.ProteinFactor, &fd.FatFactor, &fd.CarbohydrateFactor)
-		fmt.Println(fd.Id, fd.LongDesc)
-	}
-	if err = rows.Err(); err != nil {
-		log.Fatalf("row iter error: %v\n", err)
 	}
 }
