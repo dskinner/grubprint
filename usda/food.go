@@ -25,6 +25,7 @@ func Insert(tx *sql.Tx, q string, models interface{}, fn func(*sql.Stmt, interfa
 func MustExec(stmt *sql.Stmt, vals ...interface{}) sql.Result {
 	r, err := stmt.Exec(vals...)
 	if err != nil {
+		log.Printf("values: %v\n", vals)
 		panic(err)
 	}
 	return r
@@ -143,7 +144,7 @@ type NutrientDataDefinition struct {
 	TagName        string
 	NutrDesc       string
 	NumDec         string
-	Sort           string
+	Sort           float64
 }
 
 func NutrientDataDefinitionInsert(tx *sql.Tx, models ...*NutrientDataDefinition) {

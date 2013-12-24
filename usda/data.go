@@ -66,8 +66,11 @@ import (
 	"log"
 	"os"
 	"path"
+	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type FileType int
@@ -105,11 +108,10 @@ var FileTable = map[FileType]string{
 }
 
 func formatString(s string) string {
-	if s[0] == '~' {
-		s = s[1:]
-	}
-	if s[len(s)-1] == '~' {
-		s = s[:len(s)-1]
+	s = fmt.Sprintf("%q", s)
+	for _, c := range []string{"\"", "~"} {
+		s = strings.TrimPrefix(s, c)
+		s = strings.TrimSuffix(s, c)
 	}
 	return s
 }
@@ -118,10 +120,11 @@ func formatFloat(s string) float64 {
 	if s == "" {
 		return 0
 	}
+	s = formatString(s)
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
+		log.Printf("Failed to parse float %s: %v\n", s, err)
 		panic(err)
-		// log.Fatalf("Failed to parse float %s: %v\n", s, err)
 	}
 	return f
 }
@@ -231,12 +234,9 @@ func LoadLanguaLFactorDescription(tx *sql.Tx) {
 func LoadNutrientData(tx *sql.Tx) {
 	var models []*NutrientData
 	for _, cols := range LoadFile(FileNutrientData) {
-		if len(cols) != 18 {
-			panic(fmt.Sprintf("cols length %v: %v", len(cols), cols))
-		}
 		m := &NutrientData{}
-		m.Id = formatString(cols[0])
-		m.FoodId = formatString(cols[1])
+		m.Id = formatString(cols[1])
+		m.FoodId = formatString(cols[0])
 		m.Value = formatFloat(cols[2])
 		m.DataPoints = formatFloat(cols[3])
 		m.StdError = formatFloat(cols[4])
@@ -251,10 +251,8 @@ func LoadNutrientData(tx *sql.Tx) {
 		m.LowEB = formatFloat(cols[13])
 		m.UpEB = formatFloat(cols[14])
 		m.StatCmt = formatString(cols[15])
-		// TODO(d) sometimes cols comes up short, but in a way that skips the
-		// sentinel if statement above.
-		// m.AddModDate = formatString(cols[16])
-		// m.CC = formatString(cols[17])
+		m.AddModDate = formatString(cols[16])
+		m.CC = formatString(cols[17])
 		models = append(models, m)
 	}
 	NutrientDataInsert(tx, models...)
@@ -269,7 +267,7 @@ func LoadNutrientDataDefinition(tx *sql.Tx) {
 		m.TagName = formatString(cols[2])
 		m.NutrDesc = formatString(cols[3])
 		m.NumDec = formatString(cols[4])
-		m.Sort = formatString(cols[5])
+		m.Sort = formatFloat(cols[5])
 		models = append(models, m)
 	}
 	NutrientDataDefinitionInsert(tx, models...)
@@ -368,18 +366,27 @@ func LoadAll() {
 		log.Fatalf("Failed to open transaction: %v\n", err)
 	}
 
-	LoadFood(tx)
-	LoadFoodGroup(tx)
-	LoadLanguaLFactor(tx)
-	LoadLanguaLFactorDescription(tx)
-	LoadNutrientData(tx)
-	LoadNutrientDataDefinition(tx)
-	LoadSourceCode(tx)
-	LoadDataDerivation(tx)
-	LoadWeight(tx)
-	LoadFootNote(tx)
-	LoadSourcesOfDataLink(tx)
-	LoadSourcesOfData(tx)
+	fns := []func(*sql.Tx){
+		LoadFood,
+		LoadFoodGroup,
+		LoadLanguaLFactor,
+		LoadLanguaLFactorDescription,
+		LoadNutrientData,
+		LoadNutrientDataDefinition,
+		LoadSourceCode,
+		LoadDataDerivation,
+		LoadWeight,
+		LoadFootNote,
+		LoadSourcesOfDataLink,
+		LoadSourcesOfData,
+	}
+
+	for _, fn := range fns {
+		fmt.Printf("%v: ", runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name())
+		t := time.Now()
+		fn(tx)
+		fmt.Printf("%v\n", time.Now().Sub(t))
+	}
 
 	if err = tx.Commit(); err != nil {
 		log.Fatalf("transaction commit failed: %v\n", err)
