@@ -60,6 +60,7 @@ package usda
 import (
 	"bufio"
 	"database/sql"
+	"fmt"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
@@ -119,7 +120,8 @@ func formatFloat(s string) float64 {
 	}
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		log.Fatalf("Failed to parse float %s: %v\n", s, err)
+		panic(err)
+		// log.Fatalf("Failed to parse float %s: %v\n", s, err)
 	}
 	return f
 }
@@ -133,7 +135,7 @@ func dbOpen() *sql.DB {
 }
 
 func dbInit(db *sql.DB) {
-	f, err := os.Open("schema.sql")
+	f, err := os.Open("usda/schema.sql")
 	if err != nil {
 		log.Fatalf("Failed to open schema file: %v\n", err)
 	}
@@ -150,58 +152,209 @@ func dbInit(db *sql.DB) {
 
 func LoadFile(f FileType) [][]string {
 	name := FileTable[f] + ".txt"
-	file, err := os.Open(path.Join("data", name))
+	file, err := os.Open(path.Join("usda", "data", name))
 	if err != nil {
 		log.Fatalf("Failed to open file %s: %v\n", name, err)
 	}
 	defer file.Close()
 
-	var models [][]string
+	var rows [][]string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		cols := strings.Split(scanner.Text(), "^")
-		models = append(models, cols)
+		rows = append(rows, cols)
 	}
 
 	if err = scanner.Err(); err != nil {
 		log.Fatalf("Scanner error on file %s: %v\n", name, err)
 	}
 
-	return models
+	return rows
 }
 
 func LoadFood(tx *sql.Tx) {
-	var foods []*Food
+	var models []*Food
 	for _, cols := range LoadFile(FileFood) {
-		fd := &Food{}
-		fd.Id = formatString(cols[0])
-		fd.FoodGroupId = formatString(cols[1])
-		fd.LongDesc = formatString(cols[2])
-		fd.ShortDesc = formatString(cols[3])
-		fd.CommonNames = formatString(cols[4])
-		fd.ManufacturerName = formatString(cols[5])
-		fd.Survey = formatString(cols[6])
-		fd.RefuseDesc = formatString(cols[7])
-		fd.Refuse = formatFloat(cols[8])
-		fd.ScientificName = formatString(cols[9])
-		fd.NitrogenFactor = formatFloat(cols[10])
-		fd.ProteinFactor = formatFloat(cols[11])
-		fd.FatFactor = formatFloat(cols[12])
-		fd.CarbohydrateFactor = formatFloat(cols[13])
-		foods = append(foods, fd)
+		m := &Food{}
+		m.Id = formatString(cols[0])
+		m.FoodGroupId = formatString(cols[1])
+		m.LongDesc = formatString(cols[2])
+		m.ShortDesc = formatString(cols[3])
+		m.CommonNames = formatString(cols[4])
+		m.ManufacturerName = formatString(cols[5])
+		m.Survey = formatString(cols[6])
+		m.RefuseDesc = formatString(cols[7])
+		m.Refuse = formatFloat(cols[8])
+		m.ScientificName = formatString(cols[9])
+		m.NitrogenFactor = formatFloat(cols[10])
+		m.ProteinFactor = formatFloat(cols[11])
+		m.FatFactor = formatFloat(cols[12])
+		m.CarbohydrateFactor = formatFloat(cols[13])
+		models = append(models, m)
 	}
-	FoodInsert(tx, foods...)
+	FoodInsert(tx, models...)
 }
 
 func LoadFoodGroup(tx *sql.Tx) {
-	var foodGroups []*FoodGroup
+	var models []*FoodGroup
 	for _, cols := range LoadFile(FileFoodGroupDescription) {
-		fg := &FoodGroup{}
-		fg.Id = formatString(cols[0])
-		fg.Description = formatString(cols[1])
-		foodGroups = append(foodGroups, fg)
+		m := &FoodGroup{}
+		m.Id = formatString(cols[0])
+		m.Description = formatString(cols[1])
+		models = append(models, m)
 	}
-	FoodGroupInsert(tx, foodGroups...)
+	FoodGroupInsert(tx, models...)
+}
+
+func LoadLanguaLFactor(tx *sql.Tx) {
+	var models []*LanguaLFactor
+	for _, cols := range LoadFile(FileLanguaLFactor) {
+		m := &LanguaLFactor{}
+		m.FoodId = formatString(cols[0])
+		m.LanguaLFactorDescriptionId = formatString(cols[1])
+		models = append(models, m)
+	}
+	LanguaLFactorInsert(tx, models...)
+}
+
+func LoadLanguaLFactorDescription(tx *sql.Tx) {
+	var models []*LanguaLFactorDescription
+	for _, cols := range LoadFile(FileLanguaLFactorDescription) {
+		m := &LanguaLFactorDescription{}
+		m.Id = formatString(cols[0])
+		m.Description = formatString(cols[1])
+		models = append(models, m)
+	}
+	LanguaLFactorDescriptionInsert(tx, models...)
+}
+
+func LoadNutrientData(tx *sql.Tx) {
+	var models []*NutrientData
+	for _, cols := range LoadFile(FileNutrientData) {
+		if len(cols) != 18 {
+			panic(fmt.Sprintf("cols length %v: %v", len(cols), cols))
+		}
+		m := &NutrientData{}
+		m.Id = formatString(cols[0])
+		m.FoodId = formatString(cols[1])
+		m.Value = formatFloat(cols[2])
+		m.DataPoints = formatFloat(cols[3])
+		m.StdError = formatFloat(cols[4])
+		m.SourceCodeId = formatString(cols[5])
+		m.DataDerivationId = formatString(cols[6])
+		m.RefFoodId = formatString(cols[7])
+		m.AddNutrMark = formatString(cols[8])
+		m.NumStudies = formatFloat(cols[9])
+		m.Min = formatFloat(cols[10])
+		m.Max = formatFloat(cols[11])
+		m.DF = formatFloat(cols[12])
+		m.LowEB = formatFloat(cols[13])
+		m.UpEB = formatFloat(cols[14])
+		m.StatCmt = formatString(cols[15])
+		// TODO(d) sometimes cols comes up short, but in a way that skips the
+		// sentinel if statement above.
+		// m.AddModDate = formatString(cols[16])
+		// m.CC = formatString(cols[17])
+		models = append(models, m)
+	}
+	NutrientDataInsert(tx, models...)
+}
+
+func LoadNutrientDataDefinition(tx *sql.Tx) {
+	var models []*NutrientDataDefinition
+	for _, cols := range LoadFile(FileNutrientDefinition) {
+		m := &NutrientDataDefinition{}
+		m.NutrientDataId = formatString(cols[0])
+		m.Units = formatString(cols[1])
+		m.TagName = formatString(cols[2])
+		m.NutrDesc = formatString(cols[3])
+		m.NumDec = formatString(cols[4])
+		m.Sort = formatString(cols[5])
+		models = append(models, m)
+	}
+	NutrientDataDefinitionInsert(tx, models...)
+}
+
+func LoadSourceCode(tx *sql.Tx) {
+	var models []*SourceCode
+	for _, cols := range LoadFile(FileSourceCode) {
+		m := &SourceCode{}
+		m.Id = formatString(cols[0])
+		m.Description = formatString(cols[1])
+		models = append(models, m)
+	}
+	SourceCodeInsert(tx, models...)
+}
+
+func LoadDataDerivation(tx *sql.Tx) {
+	var models []*DataDerivation
+	for _, cols := range LoadFile(FileDataDerivationDescription) {
+		m := &DataDerivation{}
+		m.Id = formatString(cols[0])
+		m.Description = formatString(cols[1])
+		models = append(models, m)
+	}
+	DataDerivationInsert(tx, models...)
+}
+
+func LoadWeight(tx *sql.Tx) {
+	var models []*Weight
+	for _, cols := range LoadFile(FileWeight) {
+		m := &Weight{}
+		m.FoodId = formatString(cols[0])
+		m.Seq = formatString(cols[1])
+		m.Amount = formatFloat(cols[2])
+		m.Description = formatString(cols[3])
+		m.Grams = formatFloat(cols[4])
+		m.DataPoints = formatFloat(cols[5])
+		m.StdDev = formatFloat(cols[6])
+		models = append(models, m)
+	}
+	WeightInsert(tx, models...)
+}
+
+func LoadFootNote(tx *sql.Tx) {
+	var models []*FootNote
+	for _, cols := range LoadFile(FileFootnote) {
+		m := &FootNote{}
+		m.Id = formatString(cols[0])
+		m.FoodId = formatString(cols[1])
+		m.Type = formatString(cols[2])
+		m.NutrientDataId = formatString(cols[3])
+		m.Description = formatString(cols[4])
+		models = append(models, m)
+	}
+	FootNoteInsert(tx, models...)
+}
+
+func LoadSourcesOfDataLink(tx *sql.Tx) {
+	var models []*SourcesOfDataLink
+	for _, cols := range LoadFile(FileSourcesOfData) {
+		m := &SourcesOfDataLink{}
+		m.FoodId = formatString(cols[0])
+		m.NutrientDataId = formatString(cols[1])
+		m.SourcesOfDataId = formatString(cols[2])
+		models = append(models, m)
+	}
+	SourcesOfDataLinkInsert(tx, models...)
+}
+
+func LoadSourcesOfData(tx *sql.Tx) {
+	var models []*SourcesOfData
+	for _, cols := range LoadFile(FileSourcesOfData) {
+		m := &SourcesOfData{}
+		m.Id = formatString(cols[0])
+		m.Authors = formatString(cols[1])
+		m.Title = formatString(cols[2])
+		m.Year = formatString(cols[3])
+		m.Journal = formatString(cols[4])
+		m.VolCity = formatString(cols[5])
+		m.IssueState = formatString(cols[6])
+		m.StartPage = formatString(cols[7])
+		m.EndPage = formatString(cols[8])
+		models = append(models, m)
+	}
+	SourcesOfDataInsert(tx, models...)
 }
 
 func LoadAll() {
@@ -217,6 +370,16 @@ func LoadAll() {
 
 	LoadFood(tx)
 	LoadFoodGroup(tx)
+	LoadLanguaLFactor(tx)
+	LoadLanguaLFactorDescription(tx)
+	LoadNutrientData(tx)
+	LoadNutrientDataDefinition(tx)
+	LoadSourceCode(tx)
+	LoadDataDerivation(tx)
+	LoadWeight(tx)
+	LoadFootNote(tx)
+	LoadSourcesOfDataLink(tx)
+	LoadSourcesOfData(tx)
 
 	if err = tx.Commit(); err != nil {
 		log.Fatalf("transaction commit failed: %v\n", err)

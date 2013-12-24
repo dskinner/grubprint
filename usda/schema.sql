@@ -36,7 +36,8 @@ create table LanguaLFactorDescription (
 
 drop table if exists NutrientData;
 create table NutrientData (
-	Id               text primary key,
+	-- TODO can't set Id to primary key b/c of duplicates, investigate.
+	Id               text,
 	FoodId           text,
 	Value            real,
 	DataPoints       real,
