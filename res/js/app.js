@@ -1,4 +1,4 @@
-angular.module("food", ["services", "filters", "ui", "ui.bootstrap"]).
+angular.module("food", ["ngRoute", "ngResource", "ngGrid", "services", "filters"]).
 	config(function($httpProvider) {
 		$httpProvider.defaults.transformRequest = function(data) {
 			if (data !== undefined) {
@@ -11,7 +11,7 @@ angular.module("food", ["services", "filters", "ui", "ui.bootstrap"]).
 		$routeProvider.
 			when("/", {
 				controller: FoodCtrl,
-				templateUrl: "/partial/food.html"
+				templateUrl: "/html/food.html"
 			}).
 			otherwise({redirectTo: "/"});
 	});

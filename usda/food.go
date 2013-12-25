@@ -117,6 +117,27 @@ type NutrientData struct {
 	CC               string
 }
 
+type NutrientResult struct {
+	Nutrdesc string
+	Value    float64
+	Units    string
+}
+
+func NutrientDataQuery(w http.ResponseWriter, r *http.Request) *handler.Error {
+	q := `select ndd.nutrdesc, nd.value, ndd.units
+	from nutrientdata as nd
+	join nutrientdatadefinition as ndd on nd.id=ndd.nutrientdataid
+	where nd.foodid=$1
+	order by ndd.sort;`
+	var models []*NutrientResult
+	_, err := dbmap.Select(&models, q, r.FormValue("id"))
+	if err != nil {
+		return handler.NewError(err, 500, "Failed to query database.")
+	}
+	render.Json(w, models)
+	return nil
+}
+
 type NutrientDataDefinition struct {
 	NutrientDataId string
 	Units          string

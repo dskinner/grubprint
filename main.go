@@ -21,7 +21,7 @@ func init() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) *handler.Error {
-	t, err := template.ParseFiles("views/index.html")
+	t, err := template.ParseFiles("res/html/index.html")
 	if err != nil {
 		return handler.NewError(err, 500, "Failed to parse index.html")
 	}
@@ -41,6 +41,7 @@ func main() {
 
 	router.Handle("/", handler.New(index))
 	router.Handle("/foodQuery", handler.New(usda.FoodQuery))
+	router.Handle("/nutrientDataQuery", handler.New(usda.NutrientDataQuery))
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe("localhost:8090", nil))

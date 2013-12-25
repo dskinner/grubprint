@@ -1,0 +1,8 @@
+<input type="text" class="form-control" placeholder="Search ..." ng-model="search" ng-keypress="update()" />
+<div class="gridStyle" ng-grid="gridOptions"></div>
+<div class="selectedItems">
+	<div>Serving Size: 100 grams</div>
+	<table>
+		<tr ng-repeat="nutrient in nutrients"><td>{{nutrient.Nutrdesc}}</td><td>{{nutrient.Value}}{{nutrient.Units}}</td></tr>
+	</table>
+</div>
