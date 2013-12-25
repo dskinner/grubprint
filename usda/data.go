@@ -61,6 +61,7 @@ import (
 	"bufio"
 	"database/sql"
 	"fmt"
+	"github.com/coopernurse/gorp"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
@@ -175,8 +176,8 @@ func LoadFile(f FileType) [][]string {
 	return rows
 }
 
-func LoadFood(tx *sql.Tx) {
-	var models []*Food
+func LoadFood(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileFood) {
 		m := &Food{}
 		m.Id = formatString(cols[0])
@@ -195,44 +196,44 @@ func LoadFood(tx *sql.Tx) {
 		m.CarbohydrateFactor = formatFloat(cols[13])
 		models = append(models, m)
 	}
-	FoodInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadFoodGroup(tx *sql.Tx) {
-	var models []*FoodGroup
+func LoadFoodGroup(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileFoodGroupDescription) {
 		m := &FoodGroup{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
 		models = append(models, m)
 	}
-	FoodGroupInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadLanguaLFactor(tx *sql.Tx) {
-	var models []*LanguaLFactor
+func LoadLanguaLFactor(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileLanguaLFactor) {
 		m := &LanguaLFactor{}
 		m.FoodId = formatString(cols[0])
 		m.LanguaLFactorDescriptionId = formatString(cols[1])
 		models = append(models, m)
 	}
-	LanguaLFactorInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadLanguaLFactorDescription(tx *sql.Tx) {
-	var models []*LanguaLFactorDescription
+func LoadLanguaLFactorDescription(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileLanguaLFactorDescription) {
 		m := &LanguaLFactorDescription{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
 		models = append(models, m)
 	}
-	LanguaLFactorDescriptionInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadNutrientData(tx *sql.Tx) {
-	var models []*NutrientData
+func LoadNutrientData(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileNutrientData) {
 		m := &NutrientData{}
 		m.Id = formatString(cols[1])
@@ -255,11 +256,11 @@ func LoadNutrientData(tx *sql.Tx) {
 		m.CC = formatString(cols[17])
 		models = append(models, m)
 	}
-	NutrientDataInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadNutrientDataDefinition(tx *sql.Tx) {
-	var models []*NutrientDataDefinition
+func LoadNutrientDataDefinition(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileNutrientDefinition) {
 		m := &NutrientDataDefinition{}
 		m.NutrientDataId = formatString(cols[0])
@@ -270,33 +271,33 @@ func LoadNutrientDataDefinition(tx *sql.Tx) {
 		m.Sort = formatFloat(cols[5])
 		models = append(models, m)
 	}
-	NutrientDataDefinitionInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadSourceCode(tx *sql.Tx) {
-	var models []*SourceCode
+func LoadSourceCode(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileSourceCode) {
 		m := &SourceCode{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
 		models = append(models, m)
 	}
-	SourceCodeInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadDataDerivation(tx *sql.Tx) {
-	var models []*DataDerivation
+func LoadDataDerivation(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileDataDerivationDescription) {
 		m := &DataDerivation{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
 		models = append(models, m)
 	}
-	DataDerivationInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadWeight(tx *sql.Tx) {
-	var models []*Weight
+func LoadWeight(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileWeight) {
 		m := &Weight{}
 		m.FoodId = formatString(cols[0])
@@ -308,11 +309,11 @@ func LoadWeight(tx *sql.Tx) {
 		m.StdDev = formatFloat(cols[6])
 		models = append(models, m)
 	}
-	WeightInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadFootNote(tx *sql.Tx) {
-	var models []*FootNote
+func LoadFootNote(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileFootnote) {
 		m := &FootNote{}
 		m.Id = formatString(cols[0])
@@ -322,11 +323,11 @@ func LoadFootNote(tx *sql.Tx) {
 		m.Description = formatString(cols[4])
 		models = append(models, m)
 	}
-	FootNoteInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadSourcesOfDataLink(tx *sql.Tx) {
-	var models []*SourcesOfDataLink
+func LoadSourcesOfDataLink(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileSourcesOfData) {
 		m := &SourcesOfDataLink{}
 		m.FoodId = formatString(cols[0])
@@ -334,11 +335,11 @@ func LoadSourcesOfDataLink(tx *sql.Tx) {
 		m.SourcesOfDataId = formatString(cols[2])
 		models = append(models, m)
 	}
-	SourcesOfDataLinkInsert(tx, models...)
+	tx.Insert(models...)
 }
 
-func LoadSourcesOfData(tx *sql.Tx) {
-	var models []*SourcesOfData
+func LoadSourcesOfData(tx *gorp.Transaction) {
+	var models []interface{}
 	for _, cols := range LoadFile(FileSourcesOfData) {
 		m := &SourcesOfData{}
 		m.Id = formatString(cols[0])
@@ -352,21 +353,20 @@ func LoadSourcesOfData(tx *sql.Tx) {
 		m.EndPage = formatString(cols[8])
 		models = append(models, m)
 	}
-	SourcesOfDataInsert(tx, models...)
+	tx.Insert(models...)
 }
 
 func LoadAll() {
-	db := dbOpen()
-	defer db.Close()
 
-	dbInit(db)
+	dbmap.DropTables()
+	dbmap.CreateTables()
 
-	tx, err := db.Begin()
+	tx, err := dbmap.Begin()
 	if err != nil {
 		log.Fatalf("Failed to open transaction: %v\n", err)
 	}
 
-	fns := []func(*sql.Tx){
+	fns := []func(*gorp.Transaction){
 		LoadFood,
 		LoadFoodGroup,
 		LoadLanguaLFactor,

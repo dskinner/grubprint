@@ -40,6 +40,7 @@ func main() {
 	// dae.ServeFile("/favicon.ico", "res/favicon.ico")
 
 	router.Handle("/", handler.New(index))
+	router.Handle("/foodQuery", handler.New(usda.FoodQuery))
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe("localhost:8090", nil))

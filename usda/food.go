@@ -1,34 +1,45 @@
 package usda
 
 import (
+	"dasa.cc/dae/handler"
+	"dasa.cc/dae/render"
 	"database/sql"
+	"github.com/coopernurse/gorp"
 	"log"
-	"reflect"
+	"net/http"
+	"os"
 )
 
-func Insert(tx *sql.Tx, q string, models interface{}, fn func(*sql.Stmt, interface{})) {
-	stmt, err := tx.Prepare(q)
-	if err != nil {
-		log.Fatalf("Failed to prepare insert statement: %v\n", err)
-	}
-	switch reflect.ValueOf(models).Kind() {
-	case reflect.Slice:
-		s := reflect.ValueOf(models)
-		for i := 0; i < s.Len(); i++ {
-			fn(stmt, s.Index(i).Interface())
-		}
-	default:
-		log.Fatalf("Received unacceptable Kind: %v", models)
-	}
-}
+type m map[string]interface{}
 
-func MustExec(stmt *sql.Stmt, vals ...interface{}) sql.Result {
-	r, err := stmt.Exec(vals...)
+var (
+	dbmap *gorp.DbMap = openDb()
+)
+
+func openDb() *gorp.DbMap {
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5555/food?sslmode=disable")
 	if err != nil {
-		log.Printf("values: %v\n", vals)
-		panic(err)
+		log.Fatalf("Failed to open db conn: %v\n", err)
 	}
-	return r
+
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+
+	dbmap.AddTable(Food{}).SetKeys(false, "Id")
+	dbmap.AddTable(FoodGroup{}).SetKeys(false, "Id")
+	dbmap.AddTable(LanguaLFactor{})
+	dbmap.AddTable(LanguaLFactorDescription{}).SetKeys(false, "Id")
+	dbmap.AddTable(NutrientData{})
+	dbmap.AddTable(NutrientDataDefinition{}).SetKeys(false, "NutrientDataId")
+	dbmap.AddTable(SourceCode{}).SetKeys(false, "Id")
+	dbmap.AddTable(DataDerivation{}).SetKeys(false, "Id")
+	dbmap.AddTable(Weight{})
+	dbmap.AddTable(FootNote{})
+	dbmap.AddTable(SourcesOfDataLink{})
+	dbmap.AddTable(SourcesOfData{}).SetKeys(false, "Id")
+
+	dbmap.TraceOn("[gorp]", log.New(os.Stdout, "food:", log.Lmicroseconds))
+
+	return dbmap
 }
 
 type Food struct {
@@ -60,13 +71,14 @@ type Food struct {
 	CarbohydrateFactor float64
 }
 
-func FoodInsert(tx *sql.Tx, models ...*Food) {
-	q := "insert into Food values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*Food)
-		MustExec(stmt, m.Id, m.FoodGroupId, m.LongDesc, m.ShortDesc, m.CommonNames, m.ManufacturerName, m.Survey,
-			m.RefuseDesc, m.Refuse, m.ScientificName, m.NitrogenFactor, m.ProteinFactor, m.FatFactor, m.CarbohydrateFactor)
-	})
+func FoodQuery(w http.ResponseWriter, r *http.Request) *handler.Error {
+	var foods []*Food
+	_, err := dbmap.Select(&foods, "select * from food where longdesc like $1", "%"+r.FormValue("q")+"%")
+	if err != nil {
+		return handler.NewError(err, 500, "Failed to query database.")
+	}
+	render.Json(w, foods)
+	return nil
 }
 
 type FoodGroup struct {
@@ -74,38 +86,14 @@ type FoodGroup struct {
 	Description string
 }
 
-func FoodGroupInsert(tx *sql.Tx, models ...*FoodGroup) {
-	q := "insert into FoodGroup values ($1, $2);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*FoodGroup)
-		MustExec(stmt, m.Id, m.Description)
-	})
-}
-
 type LanguaLFactor struct {
 	FoodId                     string
 	LanguaLFactorDescriptionId string
 }
 
-func LanguaLFactorInsert(tx *sql.Tx, models ...*LanguaLFactor) {
-	q := "insert into LanguaLFactor values ($1, $2);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*LanguaLFactor)
-		MustExec(stmt, m.FoodId, m.LanguaLFactorDescriptionId)
-	})
-}
-
 type LanguaLFactorDescription struct {
 	Id          string
 	Description string
-}
-
-func LanguaLFactorDescriptionInsert(tx *sql.Tx, models ...*LanguaLFactorDescription) {
-	q := "insert into LanguaLFactorDescription values ($1, $2);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*LanguaLFactorDescription)
-		MustExec(stmt, m.Id, m.Description)
-	})
 }
 
 type NutrientData struct {
@@ -129,15 +117,6 @@ type NutrientData struct {
 	CC               string
 }
 
-func NutrientDataInsert(tx *sql.Tx, models ...*NutrientData) {
-	q := "insert into NutrientData values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*NutrientData)
-		MustExec(stmt, m.Id, m.FoodId, m.Value, m.DataPoints, m.StdError, m.SourceCodeId, m.DataDerivationId, m.RefFoodId,
-			m.AddNutrMark, m.NumStudies, m.Min, m.Max, m.DF, m.LowEB, m.UpEB, m.StatCmt, m.AddModDate, m.CC)
-	})
-}
-
 type NutrientDataDefinition struct {
 	NutrientDataId string
 	Units          string
@@ -147,38 +126,14 @@ type NutrientDataDefinition struct {
 	Sort           float64
 }
 
-func NutrientDataDefinitionInsert(tx *sql.Tx, models ...*NutrientDataDefinition) {
-	q := "insert into NutrientDataDefinition values ($1, $2, $3, $4, $5, $6);"
-	Insert(tx, q, models, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*NutrientDataDefinition)
-		MustExec(stmt, m.NutrientDataId, m.Units, m.TagName, m.NutrDesc, m.NumDec, m.Sort)
-	})
-}
-
 type SourceCode struct {
 	Id          string
 	Description string
 }
 
-func SourceCodeInsert(tx *sql.Tx, factors ...*SourceCode) {
-	q := "insert into SourceCode values ($1, $2);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*SourceCode)
-		MustExec(stmt, m.Id, m.Description)
-	})
-}
-
 type DataDerivation struct {
 	Id          string
 	Description string
-}
-
-func DataDerivationInsert(tx *sql.Tx, factors ...*DataDerivation) {
-	q := "insert into DataDerivation values ($1, $2);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*DataDerivation)
-		MustExec(stmt, m.Id, m.Description)
-	})
 }
 
 type Weight struct {
@@ -191,14 +146,6 @@ type Weight struct {
 	StdDev      float64
 }
 
-func WeightInsert(tx *sql.Tx, factors ...*Weight) {
-	q := "insert into Weight values ($1, $2, $3, $4, $5, $6, $7);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*Weight)
-		MustExec(stmt, m.FoodId, m.Seq, m.Amount, m.Description, m.Grams, m.DataPoints, m.StdDev)
-	})
-}
-
 type FootNote struct {
 	Id             string
 	FoodId         string
@@ -207,26 +154,10 @@ type FootNote struct {
 	Description    string
 }
 
-func FootNoteInsert(tx *sql.Tx, factors ...*FootNote) {
-	q := "insert into FootNote values ($1, $2, $3, $4, $5);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*FootNote)
-		MustExec(stmt, m.Id, m.FoodId, m.Type, m.NutrientDataId, m.Description)
-	})
-}
-
 type SourcesOfDataLink struct {
 	FoodId          string
 	NutrientDataId  string
 	SourcesOfDataId string
-}
-
-func SourcesOfDataLinkInsert(tx *sql.Tx, factors ...*SourcesOfDataLink) {
-	q := "insert into SourcesOfDataLink values ($1, $2, $3);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*SourcesOfDataLink)
-		MustExec(stmt, m.FoodId, m.NutrientDataId, m.SourcesOfDataId)
-	})
 }
 
 type SourcesOfData struct {
@@ -239,12 +170,4 @@ type SourcesOfData struct {
 	IssueState string
 	StartPage  string
 	EndPage    string
-}
-
-func SourcesOfDataInsert(tx *sql.Tx, factors ...*SourcesOfData) {
-	q := "insert into SourcesOfData values ($1, $2, $3, $4, $5, $6, $7, $8, $9);"
-	Insert(tx, q, factors, func(stmt *sql.Stmt, model interface{}) {
-		m := model.(*SourcesOfData)
-		MustExec(stmt, m.Id, m.Authors, m.Title, m.Year, m.Journal, m.VolCity, m.IssueState, m.StartPage, m.EndPage)
-	})
 }
