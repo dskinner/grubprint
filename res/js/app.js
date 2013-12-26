@@ -1,4 +1,4 @@
-angular.module("food", ["ngRoute", "ngResource", "ngGrid", "services", "filters"]).
+angular.module("food", ["ui.bootstrap", "ngRoute", "ngResource", "ngGrid", "services", "filters"]).
 	config(function($httpProvider) {
 		$httpProvider.defaults.transformRequest = function(data) {
 			if (data !== undefined) {

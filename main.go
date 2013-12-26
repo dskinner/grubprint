@@ -13,6 +13,7 @@ import (
 
 var (
 	dbinit = flag.Bool("dbinit", false, "init the database and exit")
+	addr   = flag.String("addr", "localhost:8080", "address to listen and serve")
 	router = mux.NewRouter()
 )
 
@@ -44,5 +45,5 @@ func main() {
 	router.Handle("/nutrientDataQuery", handler.New(usda.NutrientDataQuery))
 
 	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe("localhost:8090", nil))
+	log.Fatal(http.ListenAndServe(*addr, nil))
 }

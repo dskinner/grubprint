@@ -11,8 +11,7 @@
 		<script src="/js/angular-route.js"></script>
 		<script src="/js/angular-resource.js"></script>
 		<script src="/js/ng-grid-2.0.7.min.js"></script>
-		<!--script src="/js/ui-bootstrap-0.8.0-SNAPSHOT.min.js"></script>
-		<script src="/js/ui-bootstrap-tpls-0.8.0-SNAPSHOT.min.js"></script-->
+		<script src="/js/ui-bootstrap-0.8.0-SNAPSHOT.min.js"></script>
 		<script src="/js/angular-ui-router.min.js"></script>
 		<script src="/js/services.js"></script>
 		<script src="/js/controllers.js"></script>
@@ -21,9 +20,12 @@
 	</head>
 
 	<body>
-		<div class="page-header">
-		<h1>food.dasa.cc ~ $ links -dump nutritiondata.com | grep -v 500</h1>
+
+		<div class="container">
+			<div class="page-header">
+				<h1>food.dasa.cc ~ $ links -dump nutritiondata.com | grep -v 500</h1>
+			</div>
+			<ng-view></ng-view>
 		</div>
-		<ng-view></ng-view>
 	</body>
 </html>

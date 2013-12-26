@@ -177,7 +177,6 @@ func LoadFile(f FileType) [][]string {
 }
 
 func LoadFood(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileFood) {
 		m := &Food{}
 		m.Id = formatString(cols[0])
@@ -194,46 +193,38 @@ func LoadFood(tx *gorp.Transaction) {
 		m.ProteinFactor = formatFloat(cols[11])
 		m.FatFactor = formatFloat(cols[12])
 		m.CarbohydrateFactor = formatFloat(cols[13])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadFoodGroup(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileFoodGroupDescription) {
 		m := &FoodGroup{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadLanguaLFactor(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileLanguaLFactor) {
 		m := &LanguaLFactor{}
 		m.FoodId = formatString(cols[0])
 		m.LanguaLFactorDescriptionId = formatString(cols[1])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadLanguaLFactorDescription(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileLanguaLFactorDescription) {
 		m := &LanguaLFactorDescription{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadNutrientData(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileNutrientData) {
 		m := &NutrientData{}
 		m.Id = formatString(cols[1])
@@ -254,13 +245,11 @@ func LoadNutrientData(tx *gorp.Transaction) {
 		m.StatCmt = formatString(cols[15])
 		m.AddModDate = formatString(cols[16])
 		m.CC = formatString(cols[17])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadNutrientDataDefinition(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileNutrientDefinition) {
 		m := &NutrientDataDefinition{}
 		m.NutrientDataId = formatString(cols[0])
@@ -269,35 +258,29 @@ func LoadNutrientDataDefinition(tx *gorp.Transaction) {
 		m.NutrDesc = formatString(cols[3])
 		m.NumDec = formatString(cols[4])
 		m.Sort = formatFloat(cols[5])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadSourceCode(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileSourceCode) {
 		m := &SourceCode{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadDataDerivation(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileDataDerivationDescription) {
 		m := &DataDerivation{}
 		m.Id = formatString(cols[0])
 		m.Description = formatString(cols[1])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadWeight(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileWeight) {
 		m := &Weight{}
 		m.FoodId = formatString(cols[0])
@@ -307,13 +290,11 @@ func LoadWeight(tx *gorp.Transaction) {
 		m.Grams = formatFloat(cols[4])
 		m.DataPoints = formatFloat(cols[5])
 		m.StdDev = formatFloat(cols[6])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadFootNote(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileFootnote) {
 		m := &FootNote{}
 		m.Id = formatString(cols[0])
@@ -321,25 +302,21 @@ func LoadFootNote(tx *gorp.Transaction) {
 		m.Type = formatString(cols[2])
 		m.NutrientDataId = formatString(cols[3])
 		m.Description = formatString(cols[4])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadSourcesOfDataLink(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileSourcesOfData) {
 		m := &SourcesOfDataLink{}
 		m.FoodId = formatString(cols[0])
 		m.NutrientDataId = formatString(cols[1])
 		m.SourcesOfDataId = formatString(cols[2])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadSourcesOfData(tx *gorp.Transaction) {
-	var models []interface{}
 	for _, cols := range LoadFile(FileSourcesOfData) {
 		m := &SourcesOfData{}
 		m.Id = formatString(cols[0])
@@ -351,9 +328,8 @@ func LoadSourcesOfData(tx *gorp.Transaction) {
 		m.IssueState = formatString(cols[6])
 		m.StartPage = formatString(cols[7])
 		m.EndPage = formatString(cols[8])
-		models = append(models, m)
+		tx.Insert(m)
 	}
-	tx.Insert(models...)
 }
 
 func LoadAll() {
