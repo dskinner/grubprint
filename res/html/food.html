@@ -9,9 +9,9 @@
 
 <div class="selectedItems">
 
-	<div ng-if="nutrients">
+	<div class="row" ng-if="nutrients">
 
-		<div class="row">
+		<div class="row" style="padding-left: 15px;">
 			<div class="col-xs-4">
 				<div class="input-group">
 					<span class="input-group-addon">Serving size</span>
@@ -23,65 +23,71 @@
 		</div>
 		<hr/>
 
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Carbohydrates</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Carbohydrates">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
+		<div class="col-xs-6">
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Carbohydrates</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Carbohydrates">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Fats</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Fats">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Minerals</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Minerals">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Other</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Other">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
 				</div>
 			</div>
 		</div>
 
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Fats</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Fats">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
+		<div class="col-xs-6">
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Proteins</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Proteins">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Vitamins</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Vitamins">
+						<div class="col-xs-4">{{n.Name}}</div>
+						<div class="col-xs-8">{{n.Value | toFixed}}{{n.Unit}}</div>
+					</div>
 				</div>
 			</div>
 		</div>
 
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Proteins</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Proteins">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
-				</div>
-			</div>
-		</div>
 
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Vitamins</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Vitamins">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Minerals</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Minerals">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading"><h3 class="panel-title">Other</h3></div>
-			<div class="panel-body">
-				<div class="row" ng-repeat="n in nutrients.Other">
-					<div class="col-xs-4">{{n.Name}}</div>
-					<div class="col-xs-8">{{n.Value}}{{n.Unit}}</div>
-				</div>
-			</div>
-		</div>
 
 	</div>
 
