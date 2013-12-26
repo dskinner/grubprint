@@ -1,2 +1,3 @@
 *.sublime-workspace
-food
+food.tar.gz
+data/postgres/

@@ -3,10 +3,9 @@ package usda
 import (
 	"database/sql"
 	"github.com/coopernurse/gorp"
+	_ "github.com/lib/pq"
 	"log"
 )
-
-type m map[string]interface{}
 
 var (
 	DbMap *gorp.DbMap = openDb()
@@ -39,12 +38,12 @@ func openDb() *gorp.DbMap {
 }
 
 type Food struct {
-	Id               string
-	FoodGroupId      string
-	LongDesc         string
-	ShortDesc        string
-	CommonNames      string
-	ManufacturerName string
+	Id           string
+	FoodGroupId  string
+	LongDesc     string
+	ShortDesc    string
+	CommonNames  string
+	Manufacturer string
 
 	// Indicates if the food item is used in the USDA Food and Nutrient
 	// Database for Dietary Studies (FNDDS) and thus has a complete nutrient

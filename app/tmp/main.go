@@ -7,7 +7,10 @@ import (
 	"github.com/robfig/revel"
 	_ "dasa.cc/food/app"
 	controllers "dasa.cc/food/app/controllers"
+	tests "dasa.cc/food/tests"
 	controllers0 "github.com/robfig/revel/modules/static/app/controllers"
+	_ "github.com/robfig/revel/modules/testrunner/app"
+	controllers1 "github.com/robfig/revel/modules/testrunner/app/controllers"
 )
 
 var (
@@ -79,9 +82,44 @@ func main() {
 			
 		})
 	
+	revel.RegisterController((*controllers1.TestRunner)(nil),
+		[]*revel.MethodType{
+			&revel.MethodType{
+				Name: "Index",
+				Args: []*revel.MethodArg{ 
+				},
+				RenderArgNames: map[int][]string{ 
+					46: []string{ 
+						"testSuites",
+					},
+				},
+			},
+			&revel.MethodType{
+				Name: "Run",
+				Args: []*revel.MethodArg{ 
+					&revel.MethodArg{Name: "suite", Type: reflect.TypeOf((*string)(nil)) },
+					&revel.MethodArg{Name: "test", Type: reflect.TypeOf((*string)(nil)) },
+				},
+				RenderArgNames: map[int][]string{ 
+					69: []string{ 
+						"error",
+					},
+				},
+			},
+			&revel.MethodType{
+				Name: "List",
+				Args: []*revel.MethodArg{ 
+				},
+				RenderArgNames: map[int][]string{ 
+				},
+			},
+			
+		})
+	
 	revel.DefaultValidationKeys = map[string]map[int]string{ 
 	}
 	revel.TestSuites = []interface{}{ 
+		(*tests.AppTest)(nil),
 	}
 
 	revel.Run(*port)
