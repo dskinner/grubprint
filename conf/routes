@@ -1,0 +1,14 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+module:testrunner
+
+GET     /                                       App.Index
+GET     /foodQuery                              App.FoodQuery
+GET     /nutrientDataQuery                      App.NutrientDataQuery
+
+GET     /favicon.ico                            404
+GET     /*filepath                              Static.Serve("public")
+
+*       /:controller/:action                    :controller.:action

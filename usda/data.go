@@ -334,10 +334,10 @@ func LoadSourcesOfData(tx *gorp.Transaction) {
 
 func LoadAll() {
 
-	dbmap.DropTables()
-	dbmap.CreateTables()
+	DbMap.DropTables()
+	DbMap.CreateTables()
 
-	tx, err := dbmap.Begin()
+	tx, err := DbMap.Begin()
 	if err != nil {
 		log.Fatalf("Failed to open transaction: %v\n", err)
 	}
