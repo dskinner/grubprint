@@ -9,8 +9,15 @@ if [ ! -d "/data/postgres/" ]; then
 	su postgres -c "/usr/lib/postgresql/9.3/bin/pg_ctl start -D /data/postgres -c -w -l /dev/null"
 	su -c "psql -c \"ALTER USER postgres with encrypted password 'postgres';\" template1" postgres
 	su -c "psql -c \"CREATE DATABASE food;\" template1" postgres
+	su -c "psql -d food -a -f /data/schema.sql" postgres
+	su -c "psql -d food -a -f /data/import.sql" postgres
 	su postgres -c "/usr/lib/postgresql/9.3/bin/pg_ctl stop -D /data/postgres -c -w -l /dev/null"
 fi
 
 su postgres -c "/usr/lib/postgresql/9.3/bin/pg_ctl start -D /data/postgres -c -w"
+if [ -f "/data/app/run.sh" ]; then
+	sh /data/app/run.sh &
+else
+	echo "/data/app.run.sh does not exist! Use 'revel package dasa.cc/food' to generate"
+fi
 /usr/sbin/sshd -D

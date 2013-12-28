@@ -5,6 +5,7 @@ import (
 	"github.com/coopernurse/gorp"
 	_ "github.com/lib/pq"
 	"log"
+	// "os"
 )
 
 var (
@@ -12,58 +13,29 @@ var (
 )
 
 func openDb() *gorp.DbMap {
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5555/food?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/food?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to open db conn: %v\n", err)
 	}
 
 	DbMap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 
-	DbMap.AddTable(Food{}).SetKeys(false, "Id")
 	DbMap.AddTable(FoodGroup{}).SetKeys(false, "Id")
-	DbMap.AddTable(LanguaLFactor{})
-	DbMap.AddTable(LanguaLFactorDescription{}).SetKeys(false, "Id")
-	DbMap.AddTable(NutrientData{})
-	DbMap.AddTable(NutrientDataDefinition{}).SetKeys(false, "NutrientDataId")
+	DbMap.AddTable(Food{}).SetKeys(false, "Id")
+	DbMap.AddTable(LanguaLFactorDesc{}).SetKeys(false, "Id")
+	DbMap.AddTable(LanguaLFactor{}).SetKeys(false, "FoodId", "LanguaLFactorDescId")
 	DbMap.AddTable(SourceCode{}).SetKeys(false, "Id")
 	DbMap.AddTable(DataDerivation{}).SetKeys(false, "Id")
-	DbMap.AddTable(Weight{})
+	DbMap.AddTable(NutrientDef{}).SetKeys(false, "Id")
+	DbMap.AddTable(NutrientData{}).SetKeys(false, "FoodId", "NutrientDefId")
+	DbMap.AddTable(Weight{}).SetKeys(false, "FoodId", "Seq")
 	DbMap.AddTable(FootNote{})
-	DbMap.AddTable(SourcesOfDataLink{})
 	DbMap.AddTable(SourcesOfData{}).SetKeys(false, "Id")
+	DbMap.AddTable(SourcesOfDataLink{}).SetKeys(false, "FoodId", "NutrientDefId", "SourcesOfDataId")
 
 	// DbMap.TraceOn("[gorp]", log.New(os.Stdout, "food:", log.Lmicroseconds))
 
 	return DbMap
-}
-
-type Food struct {
-	Id           string
-	FoodGroupId  string
-	LongDesc     string
-	ShortDesc    string
-	CommonNames  string
-	Manufacturer string
-
-	// Indicates if the food item is used in the USDA Food and Nutrient
-	// Database for Dietary Studies (FNDDS) and thus has a complete nutrient
-	// profile for the 65 FNDDS nutrients.
-	Survey string
-
-	// Description of inedible parts of the foot item
-	RefuseDesc string
-	// Percentage of refuse
-	Refuse float64
-
-	ScientificName string
-
-	// Factor for converting nitrogen to protein
-	NitrogenFactor float64
-
-	// Factors for calculating calories
-	ProteinFactor      float64
-	FatFactor          float64
-	CarbohydrateFactor float64
 }
 
 type FoodGroup struct {
@@ -71,44 +43,42 @@ type FoodGroup struct {
 	Description string
 }
 
-type LanguaLFactor struct {
-	FoodId                     string
-	LanguaLFactorDescriptionId string
+type Food struct {
+	Id           string
+	FoodGroupId  string
+	LongDesc     string
+	ShortDesc    string
+	CommonNames  sql.NullString
+	Manufacturer sql.NullString
+
+	// Indicates if the food item is used in the USDA Food and Nutrient
+	// Database for Dietary Studies (FNDDS) and thus has a complete nutrient
+	// profile for the 65 FNDDS nutrients.
+	Survey sql.NullString
+
+	// Description of inedible parts of the foot item and percentage of refuse
+	RefuseDesc sql.NullString
+	Refuse     sql.NullFloat64
+
+	ScientificName sql.NullString
+
+	// Factor for converting nitrogen to protein
+	NitrogenFactor sql.NullFloat64
+
+	// Factors for calculating calories
+	ProteinFactor      sql.NullFloat64
+	FatFactor          sql.NullFloat64
+	CarbohydrateFactor sql.NullFloat64
 }
 
-type LanguaLFactorDescription struct {
+type LanguaLFactorDesc struct {
 	Id          string
 	Description string
 }
 
-type NutrientData struct {
-	Id               string
-	FoodId           string
-	Value            float64
-	DataPoints       float64
-	StdError         float64
-	SourceCodeId     string
-	DataDerivationId string
-	RefFoodId        string
-	AddNutrMark      string
-	NumStudies       float64
-	Min              float64
-	Max              float64
-	DF               float64
-	LowEB            float64
-	UpEB             float64
-	StatCmt          string
-	AddModDate       string
-	CC               string
-}
-
-type NutrientDataDefinition struct {
-	NutrientDataId string
-	Units          string
-	TagName        string
-	NutrDesc       string
-	NumDec         string
-	Sort           float64
+type LanguaLFactor struct {
+	FoodId              string
+	LanguaLFactorDescId string
 }
 
 type SourceCode struct {
@@ -121,40 +91,70 @@ type DataDerivation struct {
 	Description string
 }
 
+type NutrientDef struct {
+	Id       string
+	Units    string
+	TagName  sql.NullString
+	NutrDesc string
+	NumDec   string
+	Sort     float64
+}
+
+type NutrientData struct {
+	FoodId           string
+	NutrientDefId    string
+	Value            float64
+	DataPoints       float64
+	StdError         sql.NullFloat64
+	SourceCodeId     string
+	DataDerivationId sql.NullString
+	RefFoodId        sql.NullString
+	AddNutrMark      sql.NullString
+	NumStudies       sql.NullFloat64
+	Min              sql.NullFloat64
+	Max              sql.NullFloat64
+	DF               sql.NullFloat64
+	LowEB            sql.NullFloat64
+	UpEB             sql.NullFloat64
+	StatCmt          sql.NullString
+	AddModDate       sql.NullString
+	CC               sql.NullString
+}
+
 type Weight struct {
 	FoodId      string
 	Seq         string
 	Amount      float64
 	Description string
 	Grams       float64
-	DataPoints  float64
-	StdDev      float64
+	DataPoints  sql.NullFloat64
+	StdDev      sql.NullFloat64
 }
 
 type FootNote struct {
-	Id             string
-	FoodId         string
-	Type           string
-	NutrientDataId string
-	Description    string
-}
-
-type SourcesOfDataLink struct {
-	FoodId          string
-	NutrientDataId  string
-	SourcesOfDataId string
+	FoodId        string
+	Seq           string
+	Type          string
+	NutrientDefId sql.NullString
+	Description   string
 }
 
 type SourcesOfData struct {
 	Id         string
-	Authors    string
+	Authors    sql.NullString
 	Title      string
-	Year       string
-	Journal    string
-	VolCity    string
-	IssueState string
-	StartPage  string
-	EndPage    string
+	Year       sql.NullString
+	Journal    sql.NullString
+	VolCity    sql.NullString
+	IssueState sql.NullString
+	StartPage  sql.NullString
+	EndPage    sql.NullString
+}
+
+type SourcesOfDataLink struct {
+	FoodId          string
+	NutrientDefId   string
+	SourcesOfDataId string
 }
 
 type Nutrient struct {
@@ -171,6 +171,12 @@ type Nutrients struct {
 	Minerals      []*Nutrient
 	Sterols       []*Nutrient
 	Other         []*Nutrient
+}
+
+func NewNutrients(nutrients ...*Nutrient) *Nutrients {
+	n := &Nutrients{}
+	n.Add(nutrients...)
+	return n
 }
 
 func (n *Nutrients) Add(nutrients ...*Nutrient) {

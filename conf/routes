@@ -6,6 +6,7 @@ module:testrunner
 
 GET     /                                       App.Index
 GET     /foodQuery                              App.FoodQuery
+GET     /weightQuery                            App.WeightQuery
 GET     /nutrientDataQuery                      App.NutrientDataQuery
 
 GET     /favicon.ico                            404

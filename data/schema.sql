@@ -1,7 +1,4 @@
-﻿-- TODO(d)
--- select * from food where longdesc ~* 'navy|beans';
--- CREATE EXTENSION pg_trgm;
--- create index food_longdesc_idx on food using gin(longdesc gin_trgm_ops);
+﻿create extension if not exists pg_trgm;
 
 drop table if exists FoodGroup cascade;
 create table FoodGroup (
@@ -26,6 +23,7 @@ create table Food (
 	FatFactor          real,
 	CarbohydrateFactor real
 );
+create index food_longdesc_idx on food using gin(longdesc gin_trgm_ops);
 
 drop table if exists LanguaLFactorDesc cascade;
 create table LanguaLFactorDesc (

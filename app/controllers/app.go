@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"dasa.cc/food/usda"
+	"fmt"
 	"github.com/robfig/revel"
+	"strings"
 )
 
 type App struct {
@@ -14,30 +16,45 @@ func (c App) Index() revel.Result {
 }
 
 func (c App) FoodQuery(q string) revel.Result {
-	query := "select * from food where longdesc like $1 limit 50"
+	var (
+		models  []*usda.Food
+		selects []string
+		terms   []interface{}
+	)
 
-	var foods []*usda.Food
-	if _, err := usda.DbMap.Select(&foods, query, "%"+q+"%"); err != nil {
+	for _, w := range strings.Split(q, " ") {
+		terms = append(terms, w)
+	}
+	for i := range terms {
+		selects = append(selects, fmt.Sprintf("(select * from food where longdesc ~* $%v)", i+1))
+	}
+	query := strings.Join(selects, " intersect ") + " limit 50;"
+
+	if _, err := usda.DbMap.Select(&models, query, terms...); err != nil {
 		return c.RenderError(err)
 	}
-
-	return c.RenderJson(foods)
+	return c.RenderJson(models)
 }
 
-func (c App) NutrientDataQuery(id string) revel.Result {
-	query := `select ndd.nutrdesc as name, nd.value, ndd.units as unit
-	from nutrientdata as nd
-	join nutrientdatadefinition as ndd on nd.id=ndd.nutrientdataid
-	where nd.foodid=$1
-	order by ndd.sort;`
-
-	var models []*usda.Nutrient
+func (c App) WeightQuery(id string) revel.Result {
+	var models []*usda.Weight
+	query := "select * from weight where foodid=$1;"
 	if _, err := usda.DbMap.Select(&models, query, id); err != nil {
 		return c.RenderError(err)
 	}
+	return c.RenderJson(models)
+}
 
-	n := &usda.Nutrients{}
-	n.Add(models...)
+func (c App) NutrientDataQuery(id string) revel.Result {
+	var models []*usda.Nutrient
+	query := `select def.nutrdesc as name, dat.value, def.units as unit
+		from nutrientdata as dat
+		join nutrientdef as def on dat.nutrientdefid=def.id
+		where dat.foodid=$1
+		order by def.sort;`
 
-	return c.RenderJson(n)
+	if _, err := usda.DbMap.Select(&models, query, id); err != nil {
+		return c.RenderError(err)
+	}
+	return c.RenderJson(usda.NewNutrients(models...))
 }

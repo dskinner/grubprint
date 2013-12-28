@@ -1,19 +1,24 @@
-function FoodCtrl($scope, Food, NutrientData) {
+function FoodCtrl($scope, Food, Weight, NutrientData) {
 
 	$scope.update = function() {
 		$scope.foods = Food.query({q: $scope.search});
 		$scope.totalServerItems = $scope.foods.length;
-		$scope.updateNutrients();
+		$scope.updateSelection();
 	};
 
-	$scope.updateNutrients = function() {
+	$scope.updateSelection = function() {
 		if ($scope.selections.length === 0) return;
-		$scope.nutrients = NutrientData.get({id: $scope.selections[0].Id});
+		$scope.weights = Weight.query({id: $scope.selections[0].Id}, function() {
+			$scope.nutrients = NutrientData.get({id: $scope.selections[0].Id});
+		});
 	};
 
 	$scope.foods = [];
 	$scope.selections = [];
+	$scope.weights = [];
 	$scope.nutrients = [];
+
+	$scope.weight = 100;
 
 	$scope.gridOptions = {
 		data: "foods",
@@ -26,7 +31,7 @@ function FoodCtrl($scope, Food, NutrientData) {
 		enableColumnResize: true,
 		showFooter: true,
 		afterSelectionChange: function (rowItem, event) {
-			$scope.updateNutrients();
+			$scope.updateSelection();
 		},
 	};
 

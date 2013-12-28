@@ -2,7 +2,9 @@
 
 SSH_PORT=2222
 POSTGRES_PORT=5555
-DEV_ARGS="-p $SSH_PORT:22 -p $POSTGRES_PORT:5432"
+APP_PORT=9000
+DEV_ARGS="-p $APP_PORT:$APP_PORT -p $SSH_PORT:22 -p $POSTGRES_PORT:5432"
+PROD_ARGS="-p $APP_PORT:$APP_PORT"
 DATA=`pwd`/data
 
 usage() {
@@ -18,6 +20,12 @@ start() {
 	if [ "`docker ps -a | grep $1`" ]; then
 		docker start $1
 	else
+		mkdir $DATA/app
+		CWD=`pwd`
+		cd $DATA/app
+		revel package dasa.cc/food
+		tar -xzf ./food.tar.gz
+		cd "$CWD"
 		docker run -v `pwd`/data:/data/ -d -name $1 $2 dasa/food
 	fi
 }
@@ -40,7 +48,15 @@ dropData() {
 		echo
 		if [[ $REPLY =~ ^[Yy]$ ]]; then
 			echo "sudo rm -R \"$DATA/postgres\""
-		    sudo rm -R "$DATA/postgres"
+			sudo rm -R "$DATA/postgres"
+		fi
+	fi
+	if [ -d "$DATA/app" ]; then
+		read -p "Remove \"$DATA/app\" directory? " -n 1 -r
+		echo
+		if [[ $REPLY =~ ^[Yy]$ ]]; then
+			echo "sudo rm -R \"$DATA/app\""
+			sudo rm -R "$DATA/app"
 		fi
 	fi
 }
@@ -53,7 +69,7 @@ case "$1" in
 	start "dasa_food_dev" "$DEV_ARGS"
 	;;
 "start-prod")
-	start "dasa_food_prod"
+	start "dasa_food_prod" "$PROD_ARGS"
 	;;
 "clean")
 	clean "dasa_food_prod"
