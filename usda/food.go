@@ -2,18 +2,22 @@ package usda
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
+
 	"github.com/coopernurse/gorp"
 	_ "github.com/lib/pq"
-	"log"
-	// "os"
 )
 
 var (
-	DbMap *gorp.DbMap = openDb()
+	DbMap  *gorp.DbMap = openDb()
+	passwd string      = "sl~J)DA4" // "Z5fAUGvti2RYtk6L"
 )
 
 func openDb() *gorp.DbMap {
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/food?sslmode=disable")
+	conn := fmt.Sprintf("postgres://daniel:%s@dasa.cc:5432/food?sslmode=disable", passwd)
+	fmt.Println(conn)
+	db, err := sql.Open("postgres", conn)
 	if err != nil {
 		log.Fatalf("Failed to open db conn: %v\n", err)
 	}
