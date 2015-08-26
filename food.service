@@ -1,8 +1,0 @@
-[Unit]
-Description=Food
-After=docker.service
-Requires=docker.service
-
-[Service]
-ExecStart=/bin/bash -c '/usr/bin/docker start dasa_food || /usr/bin/docker run -d -e "VHOSTS=food.dasa.cc" -e "VPORT=8081" -p 8081:3000 --name dasa_www dasa/www'
-ExecStop=/usr/bin/docker stop dasa_www

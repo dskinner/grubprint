@@ -1,8 +1,11 @@
-FROM debian:wheezy
+FROM debian:jessie
 
 MAINTAINER Daniel Skinner <daniel@dasa.cc>
 
 ENV DEBIAN_FRONTEND noninteractive
+
+RUN dpkg-divert --local --rename --add /sbin/initctl
+RUN ln -sf /bin/true /sbin/initctl
 
 RUN apt-get -y update
 RUN apt-get -y upgrade

@@ -1,0 +1,111 @@
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<input type="text" class="form-control" placeholder="Search ..." ng-model="search" ng-keyup="update()" />
+	</div>
+	<div class="panel-body">
+		<div class="gridStyle" ng-grid="gridOptions"></div>
+	</div>
+</div>
+
+<div class="selectedItems">
+
+	<div class="row" ng-if="nutrients">
+
+		<div class="row" style="padding-left: 15px;">
+			<div class="col-xs-4">
+				<div class="input-group">
+					<span class="input-group-addon">Serving size</span>
+					<select class="form-control" ng-model="weight">
+						<option value="100">100 grams</option>
+						<option ng-repeat="w in weights" value="{{w.Grams}}">
+							{{w.Amount}} {{w.Description}} ({{w.Grams | toFixed}} grams)
+						</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<hr/>
+
+		<div class="col-xs-6">
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Carbohydrates</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Carbohydrates">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">
+								{{n.Value * weight / 100 | toFixed}}{{n.Unit}}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Fats</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Fats">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">{{n.Value * weight / 100 | toFixed}}{{n.Unit}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Minerals</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Minerals">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">{{n.Value * weight / 100 | toFixed}}{{n.Unit}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Other</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Other">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">{{n.Value * weight / 100 | toFixed}}{{n.Unit}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-xs-6">
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Proteins</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Proteins">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">{{n.Value * weight / 100 | toFixed}}{{n.Unit}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading"><h3 class="panel-title">Vitamins</h3></div>
+				<div class="panel-body">
+					<div class="row" ng-repeat="n in nutrients.Vitamins">
+						<div class="col-xs-12">
+							<div class="pull-left">{{n.Name}}</div>
+							<div class="pull-right">{{n.Value * weight / 100 | toFixed}}{{n.Unit}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+
+	</div>
+
+</div>
