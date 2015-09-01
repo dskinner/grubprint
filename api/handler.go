@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -50,7 +51,8 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if rec := recover(); rec != nil {
-			tr.LazyPrintf("PANIC %v %s: %v\n", 500, http.StatusText(500), rec)
+			http.Error(w, fmt.Sprintf("%v", rec), http.StatusInternalServerError)
+			tr.LazyPrintf("PANIC %v\n", rec)
 			tr.SetError()
 		}
 	}()
@@ -97,6 +99,11 @@ func serveContent(ctx context.Context, w http.ResponseWriter, r *http.Request, h
 
 	out := make(chan interface{})
 	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				out <- fmt.Errorf("%v", rec)
+			}
+		}()
 		v, err := h(ctx, r)
 		if err != nil {
 			out <- err
