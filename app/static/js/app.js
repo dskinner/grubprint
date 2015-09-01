@@ -11,7 +11,7 @@ angular.module("food", ["ui.bootstrap", "ngRoute", "ngResource", "ngGrid", "serv
 		$routeProvider.
 			when("/", {
 				controller: FoodCtrl,
-				templateUrl: "/html/food.html"
+				templateUrl: "/static/html/food.html"
 			}).
 			otherwise({redirectTo: "/"});
 	});

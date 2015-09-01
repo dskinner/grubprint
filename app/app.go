@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -20,7 +21,13 @@ var defaultTimeout = 1 * time.Second
 
 func Handler() http.Handler {
 	r := router.New()
+
+	// name the path for tracing
+	r.Path("/").Methods("GET").Name("Index")
+	r.Get("Index").Handler(handler(index))
+
 	r.Get(router.Foods).Handler(handler(foods))
+
 	return r
 }
 
@@ -71,14 +78,30 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func index(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	t, err := template.ParseFiles("app/templates/index.html")
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, nil)
+}
+
 func foods(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	m, err := cl.Foods.Search(mux.Vars(r)["q"])
 	if err != nil {
 		return fmt.Errorf("Client: %v", err)
 	}
-	t, err := template.ParseFiles("app/templates/foods.html")
+	return write(w, m)
+}
+
+func write(w http.ResponseWriter, v interface{}) error {
+	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
-	return t.Execute(w, m)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	_, err = w.Write(data)
+	return err
 }
