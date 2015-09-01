@@ -11,7 +11,7 @@ import (
 
 var store = datastore.New()
 
-func Router() http.Handler {
+func Handler() http.Handler {
 	r := router.New()
 	r.Get(router.Foods).Handler(handler(foods))
 	r.Get(router.Weights).Handler(handler(weights))
