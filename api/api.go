@@ -1,19 +1,17 @@
 package api
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 
 	"dasa.cc/food/datastore"
 	"dasa.cc/food/router"
 	"github.com/gorilla/mux"
+	"golang.org/x/net/context"
 )
 
 var store = datastore.New()
 
-func Router() *mux.Router {
+func Router() http.Handler {
 	r := router.New()
 	r.Get(router.Foods).Handler(handler(foods))
 	r.Get(router.Weights).Handler(handler(weights))
@@ -21,51 +19,14 @@ func Router() *mux.Router {
 	return r
 }
 
-type handler func(http.ResponseWriter, *http.Request) error
-
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := h(w, r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "error: %s", err)
-		log.Println(err)
-	}
+func foods(ctx context.Context, r *http.Request) (interface{}, error) {
+	return store.Foods.Search(mux.Vars(r)["q"])
 }
 
-func write(w http.ResponseWriter, v interface{}) error {
-	data, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	w.Header().Set("content-type", "application/json; charset=utf-8")
-	_, err = w.Write(data)
-	return err
+func weights(ctx context.Context, r *http.Request) (interface{}, error) {
+	return store.Weights.ByFoodId(mux.Vars(r)["id"])
 }
 
-func foods(w http.ResponseWriter, r *http.Request) error {
-	q := mux.Vars(r)["q"]
-	m, err := store.Foods.Search(q)
-	if err != nil {
-		return err
-	}
-	return write(w, m)
-}
-
-func weights(w http.ResponseWriter, r *http.Request) error {
-	id := mux.Vars(r)["id"]
-	m, err := store.Weights.ByFoodId(id)
-	if err != nil {
-		return err
-	}
-	return write(w, m)
-}
-
-func nutrients(w http.ResponseWriter, r *http.Request) error {
-	id := mux.Vars(r)["id"]
-	m, err := store.Nutrients.ByFoodId(id)
-	if err != nil {
-		return err
-	}
-	return write(w, m)
+func nutrients(ctx context.Context, r *http.Request) (interface{}, error) {
+	return store.Nutrients.ByFoodId(mux.Vars(r)["id"])
 }

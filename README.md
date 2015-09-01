@@ -1,3 +1,16 @@
+## Choose new name
+
+a core goal of the project is meal planning and cost analysis
+
+here's some words that could be combined:
+
+* agent
+* diet - plays well with marketing
+* plan
+* meal
+* food
+* geek - ... i mean ... cost analysis ... so ...
+
 ## Postgres
 
 ```bash
