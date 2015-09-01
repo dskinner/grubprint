@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -75,6 +76,9 @@ func foods(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("Client: %v", err)
 	}
-	fmt.Fprintf(w, "%#v", m)
-	return nil
+	t, err := template.ParseFiles("app/templates/foods.html")
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, m)
 }
