@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"dasa.cc/food/router"
 	"dasa.cc/food/usda"
-	"github.com/facebookgo/httpcontrol"
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/jwt"
 )
 
 var apiRouter = router.New()
@@ -29,9 +31,20 @@ type Client struct {
 
 func New(client *http.Client) *Client {
 	if client == nil {
-		client = &http.Client{
-			Transport: MemoryCacheTransport(&httpcontrol.Transport{MaxTries: 3}),
+		bin, err := ioutil.ReadFile("id_rsa")
+		if err != nil {
+			log.Println(err)
+			bin = []byte{}
 		}
+		conf := &jwt.Config{
+			Email:      "oauth2@keystore",
+			PrivateKey: bin,
+			Scopes:     []string{},
+			TokenURL:   "http://localhost:8080/oauth2/token",
+		}
+		client = conf.Client(oauth2.NoContext)
+		client.Transport = MemoryCacheTransport(client.Transport)
+		// TODO proxy with &httpcontrol.Transport{MaxTries: 3})
 	}
 
 	c := &Client{}

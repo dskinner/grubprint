@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"dasa.cc/food/keystore"
+
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
@@ -61,6 +63,18 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	ctx = trace.NewContext(ctx, tr)
+
+	if err := keystore.VerifyRequest(r); err != nil {
+		switch err := err.(type) {
+		case keystore.Error:
+			http.Error(w, err.Error(), err.Code())
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		tr.LazyPrintf("ERROR %v\n", err)
+		tr.SetError()
+		return
+	}
 
 	if err := serveContent(ctx, w, r, h); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

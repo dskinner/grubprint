@@ -1,4 +1,1 @@
-*.sublime-workspace
-food.tar.gz
-data/postgres/
-data/app/
+id_rsa*
