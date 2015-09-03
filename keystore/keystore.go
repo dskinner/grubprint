@@ -153,6 +153,17 @@ func (st *memstore) Get(id string) ([]byte, error) {
 	return key, nil
 }
 
+func (st *memstore) Set(id string, key []byte) error {
+	st.Lock()
+	defer st.Unlock()
+
+	if _, err := parsePublicKey(key); err != nil {
+		return err
+	}
+	st.keymap[id] = key
+	return nil
+}
+
 // Get is a helper that operates on Default.
 func Get(id string) ([]byte, error) { return Default.Get(id) }
 
@@ -164,17 +175,6 @@ func Verify(token string) error { return Default.Verify(token) }
 
 // VerifyRequest is a helper that operates on Default.
 func VerifyRequest(r *http.Request) error { return Default.VerifyRequest(r) }
-
-func (st *memstore) Set(id string, key []byte) error {
-	st.Lock()
-	defer st.Unlock()
-
-	if _, err := parsePublicKey(key); err != nil {
-		return err
-	}
-	st.keymap[id] = key
-	return nil
-}
 
 // Keystore provides methods for token verification.
 type Keystore struct {
