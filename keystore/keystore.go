@@ -1,5 +1,9 @@
 // Package keystore provides rigid storage, retrieval, and verification
 // of public keys for oauth2 bearer authorization schemes for servers.
+//
+// See also:
+// https://tools.ietf.org/html/rfc6749
+// https://tools.ietf.org/html/rfc6750
 package keystore
 
 import (
@@ -27,55 +31,49 @@ var (
 	Default = New(nil)
 
 	// The request parameters are malformed.
-	ErrInvalidRequest = &errorCode{err: "invalid_request", code: 400}
+	ErrInvalidRequest = Error{Err: "invalid_request", Code: 400}
 
 	// Client authentication failed
 	// (e.g., unknown client, no client authentication included, or unsupported authentication method)
-	ErrInvalidClient = &errorCode{err: "invalid_client", code: 401}
+	ErrInvalidClient = Error{Err: "invalid_client", Code: 401}
 
 	// The provided authorization grant is invalid, expired, revoked.
-	ErrInvalidGrant = &errorCode{err: "invalid_grant", code: 400}
+	ErrInvalidGrant = Error{Err: "invalid_grant", Code: 400}
 
 	// The authenticated client is not authorized to use this authorization grant type.
-	ErrUnauthorizedClient = &errorCode{err: "unauthorized_client", code: 400}
+	ErrUnauthorizedClient = Error{Err: "unauthorized_client", Code: 400}
 
 	// The authorization grant type is not supported by the authorization server.
-	ErrUnsupportedGrantType = &errorCode{err: "unsupported_grant_type", code: 400}
+	ErrUnsupportedGrantType = Error{Err: "unsupported_grant_type", Code: 400}
 
 	// The requested scope is invalid, unknown, malformed, or exceeds the scope granted by the resource owner.
-	ErrInvalidScope = &errorCode{err: "invalid_scope", code: 400}
+	ErrInvalidScope = Error{Err: "invalid_scope", Code: 400}
 )
 
-type Error interface {
-	error
-	Code() int
+type Error struct {
+	Err  string `json:"error"`
+	Desc string `json:"error_description,omitempty"`
+	Code int    `json:"-"`
 }
 
-type errorCode struct {
-	err  string `json:"error"`
-	desc string `json:"error_description"`
-	code int    `json:omit`
-}
-
-func (e *errorCode) Error() string { return e.desc }
-func (e *errorCode) Code() int     { return e.code }
+func (e Error) Error() string { return e.Desc }
 
 // as returns a copy of error with description.
-func (e errorCode) as(desc string) *errorCode {
-	e.desc = desc
-	return &e
+func (e Error) as(desc string) Error {
+	e.Desc = desc
+	return e
 }
 
 // HandleError is a helper for writing appropriate headers and body to response.
 // Writes Content-Type and Cache-Control headers, and writes serialized error as json.
 // If error results in 401, WWW-Authenticate header will be set.
 func HandleError(w http.ResponseWriter, e Error) {
-	if e.Code() == 401 {
+	if e.Code == 401 {
 		w.Header().Set("WWW-Authenticate", "Bearer")
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
-	w.WriteHeader(e.Code())
+	w.WriteHeader(e.Code)
 	if err := json.NewEncoder(w).Encode(e); err != nil {
 		log.Printf("encode error failed: %s\n", err)
 	}
@@ -89,13 +87,13 @@ var TokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		case Error:
 			HandleError(w, err)
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), 500)
 		}
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
-	if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x}); err != nil {
+	if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x, Expiry: time.Now().Add(time.Hour)}); err != nil {
 		log.Printf("encode token failed: %s\n", err)
 	}
 })

@@ -19,7 +19,7 @@ import (
 
 var (
 	flagAddr   = flag.String("addr", ":8080", "address to listen on")
-	flagStatic = flag.String("static", "app/static", "directory of static resources")
+	flagStatic = flag.String("static", "app/polymer/dist", "directory of static resources")
 	flagKeygen = flag.Bool("keygen", false, "generate new key pair, write to disk, and return")
 )
 
@@ -60,8 +60,9 @@ func main() {
 	m.Handle("/debug/", http.DefaultServeMux)
 	m.Handle("/oauth2/token", keystore.TokenHandler)
 	m.Handle("/api/", http.StripPrefix("/api", api.Handler()))
-	m.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(*flagStatic))))
-	m.Handle("/", app.Handler())
+	m.Handle("/app/", http.StripPrefix("/app", app.Handler()))
+	// m.Handle("/dist/", http.StripPrefix("/dist", http.FileServer(http.Dir(*flagStatic))))
+	m.Handle("/", http.FileServer(http.Dir(*flagStatic)))
 
 	log.Println("listening on", *flagAddr)
 	log.Fatal("ListenAndServe:", http.ListenAndServe(*flagAddr, m))

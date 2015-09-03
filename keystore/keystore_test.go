@@ -1,7 +1,6 @@
 package keystore
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,28 +28,15 @@ func TestMain(m *testing.M) {
 	}
 
 	mux := http.NewServeMux()
-	handleError := func(w http.ResponseWriter, err error) {
-		switch err := err.(type) {
-		case Error:
-			http.Error(w, err.Error(), err.Code())
-		default:
-			http.Error(w, err.Error(), 500)
-		}
-	}
-	mux.HandleFunc("/oauth2/token", func(w http.ResponseWriter, r *http.Request) {
-		x := r.FormValue("assertion")
-		if err := Verify(x); err != nil {
-			handleError(w, err)
-			return
-		}
-		if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x}); err != nil {
-			handleError(w, err)
-			return
-		}
-	})
+	mux.HandleFunc("/oauth2/token", TokenHandler)
 	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
 		if err := VerifyRequest(r); err != nil {
-			handleError(w, err)
+			switch err := err.(type) {
+			case Error:
+				HandleError(w, err)
+			default:
+				http.Error(w, err.Error(), 500)
+			}
 			return
 		}
 		fmt.Fprint(w, message)

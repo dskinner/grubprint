@@ -1,0 +1,44 @@
+<dom-module id="food-search">
+	<style>
+	:host {
+		display: block;
+	}
+	</style>
+
+	<template>
+		<iron-ajax
+			auto
+			url="{{url}}"
+			handle-as="json"
+			debounce-duration="300"
+			last-response="{{data}}"></iron-ajax>
+
+		<paper-input label="Search foods" value="{{search::input}}"></paper-input>
+		<iron-list items="[[data]]" as="item">
+			<template>
+				<paper-item>[[item.LongDesc]]</paper-item>
+			</template>
+		</iron-list>
+	</template>
+
+	<script>
+	(function() {
+		Polymer({
+			is: 'food-search',
+			properties: {
+				search: {
+					type: String,
+					notify: true
+				},
+				url: {
+					type: String,
+					computed: 'makeUrl(search)'
+				}
+			},
+			makeUrl: function(search) {
+				return '/app/foods/' + search;
+			}
+		});
+	})();
+	</script>
+</dom-module>
