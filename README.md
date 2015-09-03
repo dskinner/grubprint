@@ -24,8 +24,8 @@ May take a few minutes to initialize database. Check status with `docker logs fo
 ## Application
 
 ```bash
-$ cd cmd/food
-$ go run main.go
+$ go get github.com/cespare/reflex
+$ reflex -c reflex.conf
 ```
 
-Only api works. To test, visit http://localhost:8080/foods/cheese%20blue
+To test, visit http://localhost:8080/foods/cheese%20blue
