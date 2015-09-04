@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-
-	"dasa.cc/food/client"
-	"dasa.cc/food/httputil"
-	"dasa.cc/food/router"
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
+	"grubprint.io/client"
+	"grubprint.io/httputil"
+	"grubprint.io/router"
 )
 
 var cl = client.New(nil)

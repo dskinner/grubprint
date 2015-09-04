@@ -3,7 +3,7 @@ package datastore
 import (
 	"database/sql"
 
-	"dasa.cc/food/usda"
+	"grubprint.io/usda"
 )
 
 type Datastore struct {

@@ -1,9 +1,21 @@
-// Package keystore provides rigid storage, retrieval, and verification
-// of public keys for oauth2 bearer authorization schemes for servers.
+// Package keystore provides storage, retrieval, and verification
+// of public keys for oauth2 bearer authorization schemes.
 //
-// See also:
+// This is to support server-to-server interactions, often referred to as
+// two-legged OAuth.
+//
+// Implementation of this package is guided by the following RFCs:
+//
+// The OAuth 2.0 Authorization Framework
 // https://tools.ietf.org/html/rfc6749
+//
+// The OAuth 2.0 Authorization Framework: Bearer Token Usage
 // https://tools.ietf.org/html/rfc6750
+//
+// TODO require http.Request references to assure this library
+// is only used with https. A global Strict bool could manage
+// enforcement and when Strict is false, the library must produce
+// verbose warnings. When true, panic if not https.
 package keystore
 
 import (

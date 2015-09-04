@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"dasa.cc/food/httputil"
-	"dasa.cc/food/keystore"
-
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
+	"grubprint.io/httputil"
+	"grubprint.io/keystore"
 )
 
 // defaultTimeout is the duration before a request is cancelled.

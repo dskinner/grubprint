@@ -3,10 +3,10 @@ package api
 import (
 	"net/http"
 
-	"dasa.cc/food/datastore"
-	"dasa.cc/food/router"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
+	"grubprint.io/datastore"
+	"grubprint.io/router"
 )
 
 var store = datastore.New()

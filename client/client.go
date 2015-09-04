@@ -9,12 +9,12 @@ import (
 	"net/url"
 	"strings"
 
-	"dasa.cc/food/router"
-	"dasa.cc/food/usda"
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
+	"grubprint.io/router"
+	"grubprint.io/usda"
 )
 
 var apiRouter = router.New()

@@ -11,10 +11,10 @@ import (
 	_ "expvar"
 	_ "net/http/pprof"
 
-	"dasa.cc/food/api"
-	"dasa.cc/food/app"
-	"dasa.cc/food/datastore"
-	"dasa.cc/food/keystore"
+	"grubprint.io/api"
+	"grubprint.io/app"
+	"grubprint.io/datastore"
+	"grubprint.io/keystore"
 )
 
 var (

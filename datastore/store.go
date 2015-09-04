@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"dasa.cc/food/usda"
+	"grubprint.io/usda"
 )
 
 type foodStore struct {
