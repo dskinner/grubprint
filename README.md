@@ -1,22 +1,6 @@
 # grubprint.io
 
-## Development
-
 Check-out repository to `$GOPATH/src/grubprint.io`
-
-### Postgres
-
-Initialize postgres:
-
-```bash
-$ cd $GOPATH/src/grubprint.io/postgres
-$ docker build -t grubprint/db .
-$ docker run -d -p 5432:5432 --name grubprint_db grubprint/db
-```
-
-postgres will take a few minutes to initialize database. Check status with `docker logs food_db`.
-
-postgres can be managed there-after with `docker stop grubprint_db` and `docker start grubprint_db`
 
 ### Server
 
