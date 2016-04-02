@@ -1,13 +1,22 @@
 package datastore
 
 import (
-	"database/sql"
+	"log"
+	"sync"
+	"time"
 
+	"github.com/boltdb/bolt"
 	"grubprint.io/usda"
 )
 
+var (
+	db *bolt.DB
+
+	connectOnce sync.Once
+)
+
 type Datastore struct {
-	db *sql.DB
+	db *bolt.DB
 
 	Foods     usda.FoodService
 	Weights   usda.WeightService
@@ -16,7 +25,13 @@ type Datastore struct {
 
 func New() *Datastore {
 	if db == nil {
-		Connect()
+		connectOnce.Do(func() {
+			var err error
+			db, err = bolt.Open("usda.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+			if err != nil {
+				log.Fatalf("Failed to open db: %v\n", err)
+			}
+		})
 	}
 	d := &Datastore{db: db}
 	d.Foods = &foodStore{d}

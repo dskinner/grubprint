@@ -1,6 +1,13 @@
+//go:generate go run genstore.go
+
+// Package usda defines models and services for usda nutrient data.
 package usda
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+	"strconv"
+)
 
 type FoodGroup struct {
 	Id          string
@@ -12,33 +19,47 @@ type Food struct {
 	FoodGroupId  string
 	LongDesc     string
 	ShortDesc    string
-	CommonNames  sql.NullString
-	Manufacturer sql.NullString
+	CommonNames  string // nullable
+	Manufacturer string // nullable
 
 	// Indicates if the food item is used in the USDA Food and Nutrient
 	// Database for Dietary Studies (FNDDS) and thus has a complete nutrient
 	// profile for the 65 FNDDS nutrients.
-	Survey sql.NullString
+	Survey bool // nullable
 
 	// Description of inedible parts of the foot item and percentage of refuse
-	RefuseDesc sql.NullString
-	Refuse     sql.NullFloat64
+	RefuseDesc string   // nullable
+	Refuse     *float64 // nullable
 
-	ScientificName sql.NullString
+	ScientificName string // nullable
 
 	// Factor for converting nitrogen to protein
-	NitrogenFactor sql.NullFloat64
+	NitrogenFactor *float64 // nullable
 
 	// Factors for calculating calories
-	ProteinFactor      sql.NullFloat64
-	FatFactor          sql.NullFloat64
-	CarbohydrateFactor sql.NullFloat64
+	ProteinFactor      *float64 // nullable
+	FatFactor          *float64 // nullable
+	CarbohydrateFactor *float64 // nullable
 }
 
-func (f *Food) Scan(sc *sql.Rows) error {
-	return sc.Scan(&f.Id, &f.FoodGroupId, &f.LongDesc, &f.ShortDesc, &f.CommonNames,
-		&f.Manufacturer, &f.Survey, &f.RefuseDesc, &f.Refuse, &f.ScientificName,
-		&f.NitrogenFactor, &f.ProteinFactor, &f.FatFactor, &f.CarbohydrateFactor)
+// FoodFromRecord returns a new instance of Food from a csv record.
+func FoodFromRecord(r []string) *Food {
+	return &Food{
+		Id:                 r[0],
+		FoodGroupId:        r[1],
+		LongDesc:           r[2],
+		ShortDesc:          r[3],
+		CommonNames:        r[4],
+		Manufacturer:       r[5],
+		Survey:             ytob(r[6]),
+		RefuseDesc:         r[7],
+		Refuse:             floatptr(r[8]),
+		ScientificName:     r[9],
+		NitrogenFactor:     floatptr(r[10]),
+		ProteinFactor:      floatptr(r[11]),
+		FatFactor:          floatptr(r[12]),
+		CarbohydrateFactor: floatptr(r[13]),
+	}
 }
 
 type FoodService interface {
@@ -98,15 +119,23 @@ type NutrientData struct {
 type Weight struct {
 	FoodId      string
 	Seq         string
-	Amount      float64
+	Amount      *float64
 	Description string
-	Grams       float64
-	DataPoints  sql.NullFloat64
-	StdDev      sql.NullFloat64
+	Grams       *float64
+	DataPoints  *float64 // nullable
+	StdDev      *float64 // nullable
 }
 
-func (w *Weight) Scan(sc *sql.Rows) error {
-	return sc.Scan(&w.FoodId, &w.Seq, &w.Amount, &w.Description, &w.Grams, &w.DataPoints, &w.StdDev)
+func WeightFromRecord(rec []string) *Weight {
+	return &Weight{
+		FoodId:      rec[0],
+		Seq:         rec[1],
+		Amount:      floatptr(rec[2]),
+		Description: rec[3],
+		Grams:       floatptr(rec[4]),
+		DataPoints:  floatptr(rec[5]),
+		StdDev:      floatptr(rec[6]),
+	}
 }
 
 type WeightService interface {
@@ -205,5 +234,27 @@ func (n *Nutrients) Add(nutrients ...*Nutrient) {
 		default:
 			n.Other = append(n.Other, nutrient)
 		}
+	}
+}
+
+func floatptr(s string) *float64 {
+	if s == "" {
+		return nil
+	}
+	x, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		panic(err)
+	}
+	return &x
+}
+
+func ytob(s string) bool {
+	switch s {
+	case "Y":
+		return true
+	case "":
+		return false
+	default:
+		panic(fmt.Errorf("unexpected input ytob(%q)", s))
 	}
 }

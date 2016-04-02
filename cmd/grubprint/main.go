@@ -13,7 +13,6 @@ import (
 
 	"grubprint.io/api"
 	"grubprint.io/app"
-	"grubprint.io/datastore"
 	"grubprint.io/keystore"
 )
 
@@ -53,8 +52,6 @@ func main() {
 		wd, _ := os.Getwd()
 		log.Fatalf("static directory missing: %s\n", path.Join(wd, *flagStatic))
 	}
-
-	datastore.Connect()
 
 	m := http.NewServeMux()
 	m.Handle("/debug/", http.DefaultServeMux)
