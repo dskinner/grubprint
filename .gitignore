@@ -1,3 +1,9 @@
-id_rsa*
-*.db
+*~
+\#*\#
+.\#*
+*.swp
+*.prof
 *.test
+*.db
+*.log
+id_rsa*

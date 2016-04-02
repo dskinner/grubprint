@@ -40,6 +40,8 @@ type Food struct {
 	ProteinFactor      *float64 // nullable
 	FatFactor          *float64 // nullable
 	CarbohydrateFactor *float64 // nullable
+
+	Threshold float64
 }
 
 // FoodFromRecord returns a new instance of Food from a csv record.

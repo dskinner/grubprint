@@ -2,6 +2,8 @@ package datastore
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -27,7 +29,8 @@ func New() *Datastore {
 	if db == nil {
 		connectOnce.Do(func() {
 			var err error
-			db, err = bolt.Open("usda.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+			p := filepath.Join(os.Getenv("GOPATH"), "src", "grubprint.io", "usda", "usda.db")
+			db, err = bolt.Open(p, 0600, &bolt.Options{Timeout: 1 * time.Second})
 			if err != nil {
 				log.Fatalf("Failed to open db: %v\n", err)
 			}

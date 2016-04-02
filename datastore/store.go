@@ -3,67 +3,95 @@ package datastore
 import (
 	"bytes"
 	"encoding/gob"
+	"sort"
 	"strings"
 
 	"github.com/boltdb/bolt"
 	"grubprint.io/usda"
 )
 
+type byThreshold []*usda.Food
+
+func (a byThreshold) Len() int           { return len(a) }
+func (a byThreshold) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byThreshold) Less(i, j int) bool { return a[i].Threshold < a[j].Threshold }
+
 type foodStore struct {
 	*Datastore
 }
 
+func trigrams(s string) []string {
+	m := make(map[string]struct{})
+	for _, x := range strings.Split(strings.ToLower(s), " ") {
+		var g [3]rune
+		for _, r := range x {
+			g[0], g[1], g[2] = g[1], g[2], r
+			m[string(g[:])] = struct{}{}
+		}
+		g[0], g[1], g[2] = g[1], g[2], ' '
+		m[string(g[:])] = struct{}{}
+	}
+
+	var xs []string
+	for k := range m {
+		xs = append(xs, k)
+	}
+	return xs
+}
+
 func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 	var models []*usda.Food
-	terms := strings.Split(x, " ")
+
+	m := make(map[string]struct{})
+	for _, term := range strings.Split(x, " ") {
+		for _, g := range trigrams(term) {
+			m[g] = struct{}{}
+		}
+	}
 
 	err := st.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte("food")).Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		idx := tx.Bucket([]byte("food_idx"))
+		mt := make(map[string]int)
+		for k := range m {
+			v := idx.Get([]byte(k))
+			if v != nil {
+				var ids []string
+				if err := gob.NewDecoder(bytes.NewReader(v)).Decode(&ids); err != nil {
+					return err
+				}
+				for _, id := range ids {
+					if x, ok := mt[id]; ok {
+						mt[id] = x + 1
+					} else {
+						mt[id] = 1
+					}
+				}
+			}
+		}
+
+		b := tx.Bucket([]byte("food"))
+
+		for k, n := range mt {
 			if len(models) == 50 {
 				break
 			}
-			var food usda.Food
+			th := float64(n) / float64(len(m))
+			if th < 0.7 {
+				continue
+			}
+			v := b.Get([]byte(k))
+			var food *usda.Food
 			if err := gob.NewDecoder(bytes.NewReader(v)).Decode(&food); err != nil {
 				return err
 			}
-			skip := false
-			for _, term := range terms {
-				if !strings.Contains(food.LongDesc, term) {
-					skip = true
-					break
-				}
-			}
-			if !skip {
-				models = append(models, &food)
-			}
+			food.Threshold = th
+			models = append(models, food)
 		}
 		return nil
 	})
 
+	sort.Sort(byThreshold(models))
 	return models, err
-
-	// generate intersecting sub-queries on trigram index for number of terms we have
-	// for i := range terms {
-	// selects = append(selects, fmt.Sprintf("(select * from food where longdesc ~* $%v)", i+1))
-	// }
-	// query := strings.Join(selects, " intersect ") + " limit 50;"
-
-	// query and return
-	// rows, err := st.db.Query(query, terms...)
-	// if err != nil {
-	// return nil, fmt.Errorf("Food.Search failed: %v", err)
-	// }
-	// for rows.Next() {
-	// m := &usda.Food{}
-	// m.Scan(rows)
-	// models = append(models, m)
-	// }
-	// if err := rows.Err(); err != nil {
-	// return nil, fmt.Errorf("Food.Search iteration failed: %v", err)
-	// }
-
-	// return models, nil
 }
 
 type weightStore struct {
@@ -85,23 +113,6 @@ func (st *weightStore) ByFoodId(id string) ([]*usda.Weight, error) {
 		return nil
 	})
 	return models, err
-
-	// query := "select * from weight where foodid=$1;"
-
-	// rows, err := st.db.Query(query, id)
-	// if err != nil {
-	// return nil, fmt.Errorf("Weight.ByFoodId failed: %v", err)
-	// }
-	// for rows.Next() {
-	// m := &usda.Weight{}
-	// m.Scan(rows)
-	// models = append(models, m)
-	// }
-	// if err := rows.Err(); err != nil {
-	// return nil, fmt.Errorf("Weight.ByFoodId iteration error: %v", err)
-	// }
-
-	// return models, nil
 }
 
 type nutrientStore struct {
