@@ -4,6 +4,13 @@ Check-out repository to `$GOPATH/src/grubprint.io`
 
 ### Server
 
+Generate datastore for first-time setups:
+
+```bash
+$ cd $GOPATH/src/grubprint.io/usda
+$ go generate
+```
+
 Generate a new key pair for first-time setups:
 
 ```bash
