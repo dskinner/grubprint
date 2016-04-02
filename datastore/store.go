@@ -20,7 +20,8 @@ type foodStore struct {
 	*Datastore
 }
 
-func trigrams(s string) []string {
+// Trigrams returns a slice of n-grams where n equals 3.
+func Trigrams(s string) []string {
 	m := make(map[string]struct{})
 	for _, x := range strings.Split(strings.ToLower(s), " ") {
 		var g [3]rune
@@ -44,13 +45,13 @@ func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 
 	m := make(map[string]struct{})
 	for _, term := range strings.Split(x, " ") {
-		for _, g := range trigrams(term) {
+		for _, g := range Trigrams(term) {
 			m[g] = struct{}{}
 		}
 	}
 
 	err := st.db.View(func(tx *bolt.Tx) error {
-		idx := tx.Bucket([]byte("food_idx"))
+		idx := tx.Bucket([]byte("Food_idx"))
 		mt := make(map[string]int)
 		for k := range m {
 			v := idx.Get([]byte(k))
@@ -69,7 +70,7 @@ func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 			}
 		}
 
-		b := tx.Bucket([]byte("food"))
+		b := tx.Bucket([]byte("Food"))
 
 		for k, n := range mt {
 			if len(models) == 50 {
@@ -101,7 +102,7 @@ type weightStore struct {
 func (st *weightStore) ByFoodId(id string) ([]*usda.Weight, error) {
 	var models []*usda.Weight
 	err := st.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte("weight")).Cursor()
+		c := tx.Bucket([]byte("Weight")).Cursor()
 		prefix := []byte(id + ",")
 		for k, v := c.Seek(prefix); bytes.HasPrefix(k, prefix); k, v = c.Next() {
 			var weight usda.Weight

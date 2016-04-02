@@ -3,12 +3,6 @@
 // Package usda defines models and services for usda nutrient data.
 package usda
 
-import (
-	"database/sql"
-	"fmt"
-	"strconv"
-)
-
 type FoodGroup struct {
 	Id          string
 	Description string
@@ -44,26 +38,6 @@ type Food struct {
 	Threshold float64
 }
 
-// FoodFromRecord returns a new instance of Food from a csv record.
-func FoodFromRecord(r []string) *Food {
-	return &Food{
-		Id:                 r[0],
-		FoodGroupId:        r[1],
-		LongDesc:           r[2],
-		ShortDesc:          r[3],
-		CommonNames:        r[4],
-		Manufacturer:       r[5],
-		Survey:             ytob(r[6]),
-		RefuseDesc:         r[7],
-		Refuse:             floatptr(r[8]),
-		ScientificName:     r[9],
-		NitrogenFactor:     floatptr(r[10]),
-		ProteinFactor:      floatptr(r[11]),
-		FatFactor:          floatptr(r[12]),
-		CarbohydrateFactor: floatptr(r[13]),
-	}
-}
-
 type FoodService interface {
 	Search(string) ([]*Food, error)
 }
@@ -91,31 +65,31 @@ type DataDerivation struct {
 type NutrientDef struct {
 	Id       string
 	Units    string
-	TagName  sql.NullString
+	TagName  string // nullable
 	NutrDesc string
 	NumDec   string
-	Sort     float64
+	Sort     *float64
 }
 
 type NutrientData struct {
 	FoodId           string
 	NutrientDefId    string
-	Value            float64
-	DataPoints       float64
-	StdError         sql.NullFloat64
+	Value            *float64
+	DataPoints       *float64
+	StdError         *float64 // nullable
 	SourceCodeId     string
-	DataDerivationId sql.NullString
-	RefFoodId        sql.NullString
-	AddNutrMark      sql.NullString
-	NumStudies       sql.NullFloat64
-	Min              sql.NullFloat64
-	Max              sql.NullFloat64
-	DF               sql.NullFloat64
-	LowEB            sql.NullFloat64
-	UpEB             sql.NullFloat64
-	StatCmt          sql.NullString
-	AddModDate       sql.NullString
-	CC               sql.NullString
+	DataDerivationId string   // nullable
+	RefFoodId        string   // nullable
+	AddNutrMark      string   // nullable
+	NumStudies       *float64 // nullable
+	Min              *float64 // nullable
+	Max              *float64 // nullable
+	DF               *float64 // nullable
+	LowEB            *float64 // nullable
+	UpEB             *float64 // nullable
+	StatCmt          string   // nullable
+	AddModDate       string   // nullable
+	CC               string   // nullable
 }
 
 type Weight struct {
@@ -128,18 +102,6 @@ type Weight struct {
 	StdDev      *float64 // nullable
 }
 
-func WeightFromRecord(rec []string) *Weight {
-	return &Weight{
-		FoodId:      rec[0],
-		Seq:         rec[1],
-		Amount:      floatptr(rec[2]),
-		Description: rec[3],
-		Grams:       floatptr(rec[4]),
-		DataPoints:  floatptr(rec[5]),
-		StdDev:      floatptr(rec[6]),
-	}
-}
-
 type WeightService interface {
 	ByFoodId(id string) ([]*Weight, error)
 }
@@ -148,20 +110,20 @@ type FootNote struct {
 	FoodId        string
 	Seq           string
 	Type          string
-	NutrientDefId sql.NullString
+	NutrientDefId string // nullable
 	Description   string
 }
 
 type SourcesOfData struct {
 	Id         string
-	Authors    sql.NullString
+	Authors    string // nullable
 	Title      string
-	Year       sql.NullString
-	Journal    sql.NullString
-	VolCity    sql.NullString
-	IssueState sql.NullString
-	StartPage  sql.NullString
-	EndPage    sql.NullString
+	Year       string // nullable
+	Journal    string // nullable
+	VolCity    string // nullable
+	IssueState string // nullable
+	StartPage  string // nullable
+	EndPage    string // nullable
 }
 
 type SourcesOfDataLink struct {
@@ -174,10 +136,6 @@ type Nutrient struct {
 	Name  string
 	Value float64
 	Unit  string
-}
-
-func (n *Nutrient) Scan(sc *sql.Rows) error {
-	return sc.Scan(&n.Name, &n.Value, &n.Unit)
 }
 
 type NutrientService interface {
@@ -236,27 +194,5 @@ func (n *Nutrients) Add(nutrients ...*Nutrient) {
 		default:
 			n.Other = append(n.Other, nutrient)
 		}
-	}
-}
-
-func floatptr(s string) *float64 {
-	if s == "" {
-		return nil
-	}
-	x, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		panic(err)
-	}
-	return &x
-}
-
-func ytob(s string) bool {
-	switch s {
-	case "Y":
-		return true
-	case "":
-		return false
-	default:
-		panic(fmt.Errorf("unexpected input ytob(%q)", s))
 	}
 }
