@@ -39,6 +39,7 @@ type Food struct {
 }
 
 type FoodService interface {
+	ById(string) (*Food, error)
 	Search(string) ([]*Food, error)
 }
 
@@ -134,7 +135,7 @@ type SourcesOfDataLink struct {
 
 type Nutrient struct {
 	Name  string
-	Value float64
+	Value *float64
 	Unit  string
 }
 

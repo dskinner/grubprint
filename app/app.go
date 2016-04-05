@@ -11,6 +11,7 @@ import (
 	"grubprint.io/client"
 	"grubprint.io/httputil"
 	"grubprint.io/router"
+	"grubprint.io/usda"
 )
 
 var cl = client.New(nil)
@@ -21,19 +22,43 @@ func Handler() http.Handler {
 	r := router.New()
 	r.Get(router.Index).Handler(handler(index))
 	r.Get(router.Foods).Handler(handler(foods))
+	r.Get(router.Nutrients).Handler(handler(nutrients))
 	return r
 }
 
 func index(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	return httputil.WriteHTML(w, "index.html", "Hello World")
+	return httputil.WriteHTML(w, "index.html", nil)
 }
 
 func foods(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	m, err := cl.Foods.Search(mux.Vars(r)["q"])
+	foods, err := cl.Foods.Search(mux.Vars(r)["q"])
 	if err != nil {
 		return fmt.Errorf("Client: %v", err)
 	}
-	return httputil.WriteHTML(w, "foods.html", m)
+	return httputil.WriteHTML(w, "foods.html", foods)
+}
+
+func nutrients(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	type item struct {
+		Food      *usda.Food
+		Weights   []*usda.Weight
+		Nutrients *usda.Nutrients
+	}
+
+	food, err := cl.Foods.ById(mux.Vars(r)["id"])
+	if err != nil {
+		return fmt.Errorf("Client: %v", err)
+	}
+	weights, err := cl.Weights.ByFoodId(food.Id)
+	if err != nil {
+		return fmt.Errorf("Client: %v", err)
+	}
+	nutrients, err := cl.Nutrients.ByFoodId(food.Id)
+	if err != nil {
+		return fmt.Errorf("Client: %v", err)
+	}
+
+	return httputil.WriteHTML(w, "detail.html", item{food, weights, usda.NewNutrients(nutrients...)})
 }
 
 type handler func(context.Context, http.ResponseWriter, *http.Request) error

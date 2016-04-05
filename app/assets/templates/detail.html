@@ -1,0 +1,83 @@
+<div class="mdl-card mdl-shadow--2dp">
+    <div class="mdl-card__title">
+        <h2 class="mdl-card__title-text">{{.Food.LongDesc}}</h2>
+    </div>
+    <div class="mdl-card__supporting-text">
+        <select class="mdl-textfield__input">
+            {{range .Weights}}
+            <option>
+                {{.Amount}} {{.Description}} - {{.Grams}} grams
+            </option>
+            {{end}}
+        </select>
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--6-col">
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Carbohydrates}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+                <br/>
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Fats}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+                <br/>
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Sterols}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+                <br/>
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Other}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+            </div>
+            <div class="mdl-cell mdl-cell--6-col">
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Proteins}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+                <br/>
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Vitamins}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+                <br/>
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable">
+                    {{range .Nutrients.Minerals}}
+                    <tr>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Name}}</td>
+                        <td class="mdl-data-table__cell--non-numeric">{{.Value}} {{.Unit}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="mdl-card__actions">
+    </div>
+</div>

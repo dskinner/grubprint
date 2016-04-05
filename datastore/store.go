@@ -40,6 +40,18 @@ func Trigrams(s string) []string {
 	return xs
 }
 
+func (st *foodStore) ById(id string) (*usda.Food, error) {
+	var model *usda.Food
+	err := st.db.View(func(tx *bolt.Tx) error {
+		v := tx.Bucket([]byte("Food")).Get([]byte(id))
+		if err := gob.NewDecoder(bytes.NewReader(v)).Decode(&model); err != nil {
+			return err
+		}
+		return nil
+	})
+	return model, err
+}
+
 func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 	var models []*usda.Food
 
@@ -122,7 +134,24 @@ type nutrientStore struct {
 
 func (st *nutrientStore) ByFoodId(id string) ([]*usda.Nutrient, error) {
 	var models []*usda.Nutrient
-
+	err := st.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("NutrientDef"))
+		c := tx.Bucket([]byte("NutrientData")).Cursor()
+		prefix := []byte(id + ",")
+		for k, v := c.Seek(prefix); bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			var data usda.NutrientData
+			if err := gob.NewDecoder(bytes.NewReader(v)).Decode(&data); err != nil {
+				return err
+			}
+			var def usda.NutrientDef
+			if err := gob.NewDecoder(bytes.NewReader(b.Get([]byte(data.NutrientDefId)))).Decode(&def); err != nil {
+				return err
+			}
+			models = append(models, &usda.Nutrient{def.NutrDesc, data.Value, def.Units})
+		}
+		return nil
+	})
+	return models, err
 	// query := `select def.nutrdesc as name, dat.value, def.units as unit
 	// from nutrientdata as dat
 	// join nutrientdef as def on dat.nutrientdefid=def.id
