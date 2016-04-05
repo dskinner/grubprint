@@ -19,8 +19,21 @@ var defaultTimeout = 1 * time.Second
 
 func Handler() http.Handler {
 	r := router.New()
+	r.Get(router.Index).Handler(handler(index))
 	r.Get(router.Foods).Handler(handler(foods))
 	return r
+}
+
+func index(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return httputil.WriteHTML(w, "index.html", "Hello World")
+}
+
+func foods(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	m, err := cl.Foods.Search(mux.Vars(r)["q"])
+	if err != nil {
+		return fmt.Errorf("Client: %v", err)
+	}
+	return httputil.WriteHTML(w, "foods.html", m)
 }
 
 type handler func(context.Context, http.ResponseWriter, *http.Request) error
@@ -56,12 +69,4 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, r *http.Request) {
 		tr.LazyPrintf("ERROR %v\n", err)
 		tr.SetError()
 	}
-}
-
-func foods(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	m, err := cl.Foods.Search(mux.Vars(r)["q"])
-	if err != nil {
-		return fmt.Errorf("Client: %v", err)
-	}
-	return httputil.WriteJSON(w, m)
 }

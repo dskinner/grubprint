@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+    <head>
+        <title>grubprint.io</title>
+        <link rel="stylesheet" href="/public/material.min.css">
+        <script src="/public/material.min.js"></script>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div class="mdl-grid">
+            <div class="mdl-layout-spacer"></div>
+            <div class="mdl-cell mdl-cell--4-col">
+                <h1>grubprint.io</h1>
+                <form action="#">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" id="search">
+                        <label class="mdl-textfield__label" for="search">Search</label>
+                    </div>
+                </form>
+                <ul class="mdl-list" id="result"></ul>
+            </div>
+            <div class="mdl-layout-spacer"></div>
+        </div>
+        <div id="snackbar" class="mdl-js-snackbar mdl-snackbar">
+            <div class="mdl-snackbar__text"></div>
+            <button class="mdl-snackbar__action" type="button"></button>
+        </div>
+        <script src="/public/index.js"></script>
+    </body>
+</html>

@@ -2,7 +2,9 @@ package httputil
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/net/context"
@@ -63,4 +65,12 @@ func WriteJSON(w http.ResponseWriter, v interface{}) error {
 
 	_, err = w.Write(data)
 	return err
+}
+
+func WriteHTML(w http.ResponseWriter, name string, v interface{}) error {
+	tmpl, err := template.New(name).ParseFiles(filepath.Join("app", "assets", "templates", name))
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(w, v)
 }
