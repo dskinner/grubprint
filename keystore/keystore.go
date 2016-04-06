@@ -34,7 +34,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jws"
 )
 
@@ -114,7 +113,12 @@ var TokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
-	if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x, Expiry: now().Add(time.Hour)}); err != nil {
+	type tokenRes struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		ExpiresIn   int    `json:"expires_in"` // seconds
+	}
+	if err := json.NewEncoder(w).Encode(tokenRes{AccessToken: x, TokenType: "Bearer", ExpiresIn: 3600}); err != nil {
 		log.Printf("encode token failed: %s\n", err)
 	}
 })

@@ -96,16 +96,23 @@ func TestNotVerified(t *testing.T) {
 
 func TestInvalidToken(t *testing.T) {
 	var err error
-	_, err = conf.Client(oauth2.NoContext).Get(urlsecret)
+	var resp *http.Response
+	resp, err = conf.Client(oauth2.NoContext).Get(urlsecret)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if resp.StatusCode != 200 {
+		t.Fatal("Expected 200")
 	}
 
 	now = func() time.Time { return time.Now().Add(2 * time.Hour) }
 	defer func() { now = time.Now }()
 
-	_, err = conf.Client(oauth2.NoContext).Get(urlsecret)
+	resp, err = conf.Client(oauth2.NoContext).Get(urlsecret)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if resp.StatusCode != 401 {
+		t.Fatal("Expected 401")
 	}
 }
