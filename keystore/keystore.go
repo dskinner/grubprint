@@ -103,11 +103,14 @@ var TokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 	if err := Verify(x); err != nil {
 		switch err := err.(type) {
 		case Error:
-			HandleError(w, err)
+			if err.Err != "invalid_token" {
+				HandleError(w, err)
+				return
+			}
 		default:
 			http.Error(w, err.Error(), 500)
+			return
 		}
-		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
@@ -221,12 +224,6 @@ func (ks *Keystore) Verify(token string) error {
 	if err := json.NewDecoder(bytes.NewBuffer(payloadJson)).Decode(&cs); err != nil {
 		return ErrInvalidRequest.as("json decode payload failed")
 	}
-	if time.Unix(cs.Iat, 0).After(now()) {
-		return ErrInvalidToken.as("invalid timestamp")
-	}
-	if time.Unix(cs.Exp, 0).Before(now()) {
-		return ErrInvalidToken.as("token expired")
-	}
 
 	// verify signature
 	bin, err := ks.Get(cs.Iss)
@@ -249,6 +246,15 @@ func (ks *Keystore) Verify(token string) error {
 
 	if err := rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hash.Sum(nil), sig); err != nil {
 		return ErrInvalidClient.as("key verification failed")
+	}
+
+	// TODO these checks are intentionally last. Need to consider TokenHandler which needs to verify
+	// signature but ignore expiry when issuing new tokens.
+	if time.Unix(cs.Iat, 0).After(now()) {
+		return ErrInvalidToken.as("invalid timestamp")
+	}
+	if time.Unix(cs.Exp, 0).Before(now()) {
+		return ErrInvalidToken.as("token expired")
 	}
 
 	return nil

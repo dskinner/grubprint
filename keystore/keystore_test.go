@@ -102,9 +102,10 @@ func TestInvalidToken(t *testing.T) {
 	}
 
 	now = func() time.Time { return time.Now().Add(2 * time.Hour) }
+	defer func() { now = time.Now }()
 
 	_, err = conf.Client(oauth2.NoContext).Get(urlsecret)
-	if err == nil {
-		t.Fatal("Expected 401 invalid_token")
+	if err != nil {
+		t.Fatal(err)
 	}
 }
