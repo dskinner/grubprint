@@ -1,0 +1,6 @@
+build:
+  image: golang
+  commands:
+    - go get ./...
+    - go build grubprint.io/cmd/grubprint
+    - go test ./...
