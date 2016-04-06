@@ -7,18 +7,23 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 
 	_ "expvar"
 	_ "net/http/pprof"
 
 	"grubprint.io/api"
 	"grubprint.io/app"
+	"grubprint.io/client"
+	"grubprint.io/datastore"
+	"grubprint.io/httputil"
 	"grubprint.io/keystore"
 )
 
 var (
 	flagAddr   = flag.String("addr", ":8080", "address to listen on")
-	flagAssets = flag.String("assets", "app/assets/public", "directory of static resources")
+	flagAssets = flag.String("assets", "app/assets", "directory of static resources")
+	flagDB     = flag.String("db", "usda/usda.db", "location of db")
 	flagKeygen = flag.Bool("keygen", false, "generate new key pair, write to disk, and return")
 )
 
@@ -40,7 +45,14 @@ func main() {
 		return
 	}
 
-	bin, err := ioutil.ReadFile("id_rsa.pub")
+	if _, err := os.Stat(*flagAssets); os.IsNotExist(err) {
+		wd, _ := os.Getwd()
+		log.Fatalf("assets directory missing: %s\n", path.Join(wd, *flagAssets))
+	}
+	httputil.AssetsDir = *flagAssets
+	client.AssetsDir = *flagAssets
+
+	bin, err := ioutil.ReadFile(filepath.Join(*flagAssets, "id_rsa.pub"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,17 +60,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if _, err := os.Stat(*flagAssets); os.IsNotExist(err) {
-		wd, _ := os.Getwd()
-		log.Fatalf("assets directory missing: %s\n", path.Join(wd, *flagAssets))
-	}
+	datastore.Connect(*flagDB)
 
 	m := http.NewServeMux()
 	m.Handle("/debug/", http.DefaultServeMux)
 	m.Handle("/oauth2/token", keystore.TokenHandler)
 	m.Handle("/api/", http.StripPrefix("/api", api.Handler()))
-	m.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir(*flagAssets))))
-	// m.Handle("/public", http.FileServer(http.Dir(*flagAssets)))
+	m.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir(filepath.Join(*flagAssets, "public")))))
 	m.Handle("/", app.Handler())
 
 	log.Println("listening on", *flagAddr)

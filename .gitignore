@@ -6,4 +6,7 @@
 *.test
 *.db
 *.log
+*.tar
+*.gz
 id_rsa*
+dist/

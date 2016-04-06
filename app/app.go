@@ -14,11 +14,15 @@ import (
 	"grubprint.io/usda"
 )
 
-var cl = client.New(nil)
+var cl *client.Client
 
 var defaultTimeout = 1 * time.Second
 
 func Handler() http.Handler {
+	// TODO work out initialization of client regarding keys
+	if cl == nil {
+		cl = client.New(nil)
+	}
 	r := router.New()
 	r.Get(router.Index).Handler(handler(index))
 	r.Get(router.Foods).Handler(handler(foods))

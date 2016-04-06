@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -16,6 +17,8 @@ import (
 	"grubprint.io/router"
 	"grubprint.io/usda"
 )
+
+var AssetsDir string
 
 var apiRouter = router.New()
 
@@ -31,9 +34,9 @@ type Client struct {
 
 func New(client *http.Client) *Client {
 	if client == nil {
-		bin, err := ioutil.ReadFile("id_rsa")
+		bin, err := ioutil.ReadFile(filepath.Join(AssetsDir, "id_rsa"))
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 			bin = []byte{}
 		}
 		conf := &jwt.Config{

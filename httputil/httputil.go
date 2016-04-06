@@ -11,6 +11,8 @@ import (
 	"golang.org/x/net/trace"
 )
 
+var AssetsDir string
+
 // modtime is used for Last-Modified header since usda data is static.
 var modtime = time.Now().UTC()
 
@@ -68,7 +70,7 @@ func WriteJSON(w http.ResponseWriter, v interface{}) error {
 }
 
 func WriteHTML(w http.ResponseWriter, name string, v interface{}) error {
-	tmpl, err := template.New(name).ParseFiles(filepath.Join("app", "assets", "templates", name))
+	tmpl, err := template.New(name).ParseFiles(filepath.Join(AssetsDir, "templates", name))
 	if err != nil {
 		return err
 	}

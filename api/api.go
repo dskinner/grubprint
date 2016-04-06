@@ -9,9 +9,13 @@ import (
 	"grubprint.io/router"
 )
 
-var store = datastore.New()
+var store *datastore.Datastore
 
 func Handler() http.Handler {
+	// TODO work out details for initialization after configuration
+	if store == nil {
+		store = datastore.New()
+	}
 	r := router.New()
 	r.Get(router.Food).Handler(handler(food))
 	r.Get(router.Foods).Handler(handler(foods))

@@ -17,6 +17,16 @@ var (
 	connectOnce sync.Once
 )
 
+func Connect(fn string) {
+	connectOnce.Do(func() {
+		var err error
+		db, err = bolt.Open(fn, 0600, &bolt.Options{Timeout: 1 * time.Second})
+		if err != nil {
+			log.Fatalf("Failed to open db: %v\n", err)
+		}
+	})
+}
+
 type Datastore struct {
 	db *bolt.DB
 
@@ -27,14 +37,7 @@ type Datastore struct {
 
 func New() *Datastore {
 	if db == nil {
-		connectOnce.Do(func() {
-			var err error
-			p := filepath.Join(os.Getenv("GOPATH"), "src", "grubprint.io", "usda", "usda.db")
-			db, err = bolt.Open(p, 0600, &bolt.Options{Timeout: 1 * time.Second})
-			if err != nil {
-				log.Fatalf("Failed to open db: %v\n", err)
-			}
-		})
+		Connect(filepath.Join(os.Getenv("GOPATH"), "src", "grubprint.io", "usda", "usda.db"))
 	}
 	d := &Datastore{db: db}
 	d.Foods = &foodStore{d}
