@@ -49,8 +49,8 @@ var (
 	// (e.g., unknown client, no client authentication included, or unsupported authentication method)
 	ErrInvalidClient = Error{Err: "invalid_client", Code: 401}
 
-	// The provided authorization grant is invalid, expired, revoked.
-	ErrInvalidGrant = Error{Err: "invalid_grant", Code: 400}
+	// The access token provided is expired, revoked, malformed, or invalid for other reasons.
+	ErrInvalidToken = Error{Err: "invalid_token", Code: 401}
 
 	// The authenticated client is not authorized to use this authorization grant type.
 	ErrUnauthorizedClient = Error{Err: "unauthorized_client", Code: 400}
@@ -60,6 +60,9 @@ var (
 
 	// The requested scope is invalid, unknown, malformed, or exceeds the scope granted by the resource owner.
 	ErrInvalidScope = Error{Err: "invalid_scope", Code: 400}
+
+	// stubbed for tests
+	now = time.Now
 )
 
 type Error struct {
@@ -80,8 +83,11 @@ func (e Error) as(desc string) Error {
 // Writes Content-Type and Cache-Control headers, and writes serialized error as json.
 // If error results in 401, WWW-Authenticate header will be set.
 func HandleError(w http.ResponseWriter, e Error) {
-	if e.Code == 401 {
+	switch e {
+	case ErrInvalidClient:
 		w.Header().Set("WWW-Authenticate", "Bearer")
+	case ErrInvalidToken:
+		w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer error="%s",error_description="%s"`, e.Err, e.Desc))
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
@@ -105,7 +111,7 @@ var TokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "private, no-store")
-	if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x, Expiry: time.Now().Add(time.Hour)}); err != nil {
+	if err := json.NewEncoder(w).Encode(oauth2.Token{AccessToken: x, Expiry: now().Add(time.Hour)}); err != nil {
 		log.Printf("encode token failed: %s\n", err)
 	}
 })
@@ -215,11 +221,11 @@ func (ks *Keystore) Verify(token string) error {
 	if err := json.NewDecoder(bytes.NewBuffer(payloadJson)).Decode(&cs); err != nil {
 		return ErrInvalidRequest.as("json decode payload failed")
 	}
-	if time.Unix(cs.Iat, 0).After(time.Now()) {
-		return ErrInvalidGrant.as("invalid timestamp")
+	if time.Unix(cs.Iat, 0).After(now()) {
+		return ErrInvalidToken.as("invalid timestamp")
 	}
-	if time.Unix(cs.Exp, 0).Before(time.Now()) {
-		return ErrInvalidGrant.as("token expired")
+	if time.Unix(cs.Exp, 0).Before(now()) {
+		return ErrInvalidToken.as("token expired")
 	}
 
 	// verify signature

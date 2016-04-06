@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
@@ -90,5 +91,20 @@ func TestNotVerified(t *testing.T) {
 
 	if resp.StatusCode == 200 || string(bin) == message {
 		t.Fatalf("Bad response: %v %s", resp.StatusCode, bin)
+	}
+}
+
+func TestInvalidToken(t *testing.T) {
+	var err error
+	_, err = conf.Client(oauth2.NoContext).Get(urlsecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	now = func() time.Time { return time.Now().Add(2 * time.Hour) }
+
+	_, err = conf.Client(oauth2.NoContext).Get(urlsecret)
+	if err == nil {
+		t.Fatal("Expected 401 invalid_token")
 	}
 }
