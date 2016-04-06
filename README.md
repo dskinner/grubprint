@@ -1,4 +1,4 @@
-# grubprint.io
+# grubprint.io [![Build Status](https://drone.dasa.cc/api/badges/dskinner/grubprint/status.svg)](https://drone.dasa.cc/dskinner/grubprint)
 
 Check-out repository to `$GOPATH/src/grubprint.io`
 
