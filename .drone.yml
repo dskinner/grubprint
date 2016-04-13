@@ -4,6 +4,7 @@ build:
     - go get grubprint.io/...
     - go build grubprint.io
     - go test grubprint.io/...
+    - go generate grubprint.io/usda
     - mkdir dist
     - mv grubprint.io dist/
     - cp -R assets dist/
