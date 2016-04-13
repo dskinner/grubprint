@@ -8,5 +8,6 @@
 *.log
 *.tar
 *.gz
+*.io
 id_rsa*
 dist/

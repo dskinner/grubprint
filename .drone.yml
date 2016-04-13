@@ -4,15 +4,25 @@ build:
     - go get grubprint.io/...
     - go build grubprint.io
     - go test grubprint.io/...
+    - mkdir dist
+    - mv grubprint.io dist/
+    - cp -R assets dist/
+    - ./dist/grubprint.io -keygen
+    - mv ./id_rsa* dist/assets/
 clone:
   path: grubprint.io
 deploy:
+  ssh:
+    user: daniel
+    host: grubprint.io
+    commands:
+      - sudo systemctl stop grubprint@daniel.service
   rsync:
     user: daniel
     host: grubprint.io
-    source: assets
+    source: dist
     target: dist
     delete: true
     recursive: true
     commands:
-      - sudo systemctl restart grubprint@daniel.service
+      - sudo systemctl start grubprint@daniel.service
