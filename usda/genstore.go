@@ -7,10 +7,12 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +21,8 @@ import (
 	"grubprint.io/datastore"
 	"grubprint.io/usda"
 )
+
+var flagOutdir = flag.String("outdir", "./", "directory to output usda.db")
 
 func iter(name string, fields int) <-chan []string {
 	c := make(chan []string)
@@ -81,10 +85,12 @@ func ytob(s string) bool {
 }
 
 func main() {
-	if err := os.Remove("usda.db"); err != nil && !os.IsNotExist(err) {
+	flag.Parse()
+	fn := filepath.Join(*flagOutdir, "usda.db")
+	if err := os.Remove(fn); err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
-	db, err := bolt.Open("usda.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := bolt.Open(fn, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatal(err)
 	}

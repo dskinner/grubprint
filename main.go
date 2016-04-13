@@ -22,8 +22,7 @@ import (
 
 var (
 	flagAddr   = flag.String("addr", ":8080", "address to listen on")
-	flagAssets = flag.String("assets", "app/assets", "directory of static resources")
-	flagDB     = flag.String("db", "usda/usda.db", "location of db")
+	flagAssets = flag.String("assets", "assets", "directory of static resources")
 	flagKeygen = flag.Bool("keygen", false, "generate new key pair, write to disk, and return")
 )
 
@@ -60,7 +59,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	datastore.Connect(*flagDB)
+	datastore.Connect(filepath.Join(*flagAssets, "usda.db"))
 
 	m := http.NewServeMux()
 	m.Handle("/debug/", http.DefaultServeMux)

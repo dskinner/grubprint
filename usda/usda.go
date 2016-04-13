@@ -1,4 +1,4 @@
-//go:generate go run genstore.go
+//go:generate go run genstore.go -outdir ../assets
 
 // Package usda defines models and services for usda nutrient data.
 package usda

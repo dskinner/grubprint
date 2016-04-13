@@ -41,29 +41,37 @@ var (
 	// Default provides a default in-memory keystore implementation.
 	Default = New(nil)
 
-	// The request parameters are malformed.
+	// ExpiresIn is the default expiry time for access tokens.
+	ExpiresIn = 3600 * time.Second
+
+	// ErrInvalidRequest represents an error for when the request parameters are malformed.
 	ErrInvalidRequest = Error{Err: "invalid_request", Code: 400}
 
-	// Client authentication failed
-	// (e.g., unknown client, no client authentication included, or unsupported authentication method)
+	// ErrInvalidClient represents an error for when client authentication failed,
+	// e.g. unknown client, no client authentication included, or unsupported authentication method.
 	ErrInvalidClient = Error{Err: "invalid_client", Code: 401}
 
-	// The access token provided is expired, revoked, malformed, or invalid for other reasons.
+	// ErrInvalidToken represents an error for when the access token provided is
+	// expired, revoked, malformed, or invalid for other reasons.
 	ErrInvalidToken = Error{Err: "invalid_token", Code: 401}
 
-	// The authenticated client is not authorized to use this authorization grant type.
+	// ErrUnauthorizedClient represents an error for when the authenticated client is not authorized
+	// to use this authorization grant type.
 	ErrUnauthorizedClient = Error{Err: "unauthorized_client", Code: 400}
 
-	// The authorization grant type is not supported by the authorization server.
+	// ErrUnsupportedGrantType represents an error for when the authorization grant type is not
+	// supported by the authorization server.
 	ErrUnsupportedGrantType = Error{Err: "unsupported_grant_type", Code: 400}
 
-	// The requested scope is invalid, unknown, malformed, or exceeds the scope granted by the resource owner.
+	// ErrInvalidScope represents an error for when the requested scope is invalid, unknown,
+	// malformed, or exceeds the scope granted by the resource owner.
 	ErrInvalidScope = Error{Err: "invalid_scope", Code: 400}
 
 	// stubbed for tests
 	now = time.Now
 )
 
+// Error represents error types as defined in RFC 6749 and RFC 6750.
 type Error struct {
 	Err  string `json:"error"`
 	Desc string `json:"error_description,omitempty"`
@@ -118,7 +126,7 @@ var TokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		TokenType   string `json:"token_type"`
 		ExpiresIn   int    `json:"expires_in"` // seconds
 	}
-	if err := json.NewEncoder(w).Encode(tokenRes{AccessToken: x, TokenType: "Bearer", ExpiresIn: 3600}); err != nil {
+	if err := json.NewEncoder(w).Encode(tokenRes{AccessToken: x, TokenType: "Bearer", ExpiresIn: int(ExpiresIn / time.Second)}); err != nil {
 		log.Printf("encode token failed: %s\n", err)
 	}
 })
@@ -220,12 +228,12 @@ func (ks *Keystore) Verify(token string) error {
 	}
 
 	// verify claim set
-	payloadJson, err := base64Decode(parts[1])
+	payload, err := base64Decode(parts[1])
 	if err != nil {
 		return ErrInvalidRequest.as("base64 decode payload failed")
 	}
 	var cs jws.ClaimSet
-	if err := json.NewDecoder(bytes.NewBuffer(payloadJson)).Decode(&cs); err != nil {
+	if err := json.NewDecoder(bytes.NewBuffer(payload)).Decode(&cs); err != nil {
 		return ErrInvalidRequest.as("json decode payload failed")
 	}
 

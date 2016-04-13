@@ -2,7 +2,17 @@ build:
   image: golang
   commands:
     - go get grubprint.io/...
-    - go build grubprint.io/cmd/grubprint
+    - go build grubprint.io
     - go test grubprint.io/...
 clone:
   path: grubprint.io
+deploy:
+  rsync:
+    user: daniel
+    host: grubprint.io
+    source: grubprint.io/assets
+    target: dist
+    delete: true
+    recursive: true
+    commands:
+      - sudo systemctl restart grubprint@daniel.service

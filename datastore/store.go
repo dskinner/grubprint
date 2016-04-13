@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/boltdb/bolt"
 	"grubprint.io/usda"
@@ -14,7 +15,7 @@ type byThreshold []*usda.Food
 
 func (a byThreshold) Len() int           { return len(a) }
 func (a byThreshold) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byThreshold) Less(i, j int) bool { return a[i].Threshold < a[j].Threshold }
+func (a byThreshold) Less(i, j int) bool { return a[i].Threshold > a[j].Threshold }
 
 type foodStore struct {
 	*Datastore
@@ -22,8 +23,17 @@ type foodStore struct {
 
 // Trigrams returns a slice of n-grams where n equals 3.
 func Trigrams(s string) []string {
+	mod := func(r rune) rune {
+		if unicode.IsDigit(r) || unicode.IsLetter(r) || unicode.IsSpace(r) {
+			if unicode.IsUpper(r) {
+				return unicode.ToLower(r)
+			}
+			return r
+		}
+		return -1
+	}
 	m := make(map[string]struct{})
-	for _, x := range strings.Split(strings.ToLower(s), " ") {
+	for _, x := range strings.Fields(strings.Map(mod, s)) {
 		var g [3]rune
 		for _, r := range x {
 			g[0], g[1], g[2] = g[1], g[2], r
@@ -54,18 +64,12 @@ func (st *foodStore) ById(id string) (*usda.Food, error) {
 
 func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 	var models []*usda.Food
-
-	m := make(map[string]struct{})
-	for _, term := range strings.Split(x, " ") {
-		for _, g := range Trigrams(term) {
-			m[g] = struct{}{}
-		}
-	}
+	gs := Trigrams(x)
 
 	err := st.db.View(func(tx *bolt.Tx) error {
 		idx := tx.Bucket([]byte("Food_idx"))
 		mt := make(map[string]int)
-		for k := range m {
+		for _, k := range gs {
 			v := idx.Get([]byte(k))
 			if v != nil {
 				var ids []string
@@ -88,7 +92,7 @@ func (st *foodStore) Search(x string) ([]*usda.Food, error) {
 			if len(models) == 50 {
 				break
 			}
-			th := float64(n) / float64(len(m))
+			th := float64(n) / float64(len(gs))
 			if th < 0.7 {
 				continue
 			}
@@ -152,24 +156,4 @@ func (st *nutrientStore) ByFoodId(id string) ([]*usda.Nutrient, error) {
 		return nil
 	})
 	return models, err
-	// query := `select def.nutrdesc as name, dat.value, def.units as unit
-	// from nutrientdata as dat
-	// join nutrientdef as def on dat.nutrientdefid=def.id
-	// where dat.foodid=$1
-	// order by def.sort;`
-
-	// rows, err := st.db.Query(query, id)
-	// if err != nil {
-	// return nil, fmt.Errorf("Nutrient.ByFoodId failed: %v", err)
-	// }
-	// for rows.Next() {
-	// m := &usda.Nutrient{}
-	// m.Scan(rows)
-	// models = append(models, m)
-	// }
-	// if err := rows.Err(); err != nil {
-	// return nil, fmt.Errorf("Nutrient.ByFoodId iteration failed: %v", err)
-	// }
-
-	return models, nil
 }
