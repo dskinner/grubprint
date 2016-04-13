@@ -7,15 +7,15 @@ Check-out repository to `$GOPATH/src/grubprint.io`
 Generate datastore for first-time setups:
 
 ```bash
-$ cd $GOPATH/src/grubprint.io/usda
-$ go generate
+$ go generate grubprint.io/usda
 ```
 
 Generate a new key pair for first-time setups:
 
 ```bash
 $ cd $GOPATH/src/grubprint.io
-$ go run cmd/grubprint/main.go -keygen
+$ go run main.go -keygen
+$ mv id_rsa* assets/
 ```
 
 There exists a `reflex.conf` in the project root that can assist with recompiling the server and
