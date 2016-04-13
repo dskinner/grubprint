@@ -10,7 +10,7 @@ deploy:
   rsync:
     user: daniel
     host: grubprint.io
-    source: grubprint.io/assets
+    source: assets
     target: dist
     delete: true
     recursive: true
